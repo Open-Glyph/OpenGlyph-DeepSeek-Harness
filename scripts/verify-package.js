@@ -27,12 +27,16 @@ try{
     class Inputs extends Service {constructor(ctx){super(ctx,'subprocess')}}
     class Attachments extends Service {constructor(ctx){super(ctx,'attachments')}}
     class WorkingDirectory extends Service {constructor(ctx){super(ctx,'workingDirectory')}}
-    await ctx.plugin(Inputs);await ctx.plugin(Attachments);await ctx.plugin(WorkingDirectory);
+    class Shell extends Service {constructor(ctx){super(ctx,'shell')}}
+    await ctx.plugin(Inputs);await ctx.plugin(Shell);await ctx.plugin(Attachments);await ctx.plugin(WorkingDirectory);
     await ctx.plugin(plugin, {workspaceRoot:process.cwd()});
-    assert.equal(ctx.tools.schemas().filter(t=>t.name.startsWith('gwz_')).length,27);
+    assert.equal(ctx.tools.schemas().filter(t=>t.name.startsWith('gwz_')).length,33);
+    const skill=await ctx.skills.get('openglyph');
+    assert.equal(skill.invocation.userInvocable,true);
+    assert.match(skill.content,/OpenGlyphLoad/);
     assert.ok(ctx.tools.get('gwz_glyph_compose').parameters.properties.program);
     await ctx.fiber.dispose();
-    console.log(JSON.stringify({status:'passed',registered:27,entry:'packed Git-install-compatible ESM',model_calls:0}));
+    console.log(JSON.stringify({status:'passed',registered:33,slash_skill:'openglyph',entry:'packed Git-install-compatible ESM',model_calls:0}));
   `
   const result=spawnSync(process.execPath,['--input-type=module','-e',script],{cwd:directory,encoding:'utf8',env:environment})
   assert.equal(result.status,0,result.stderr)

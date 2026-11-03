@@ -2,11 +2,14 @@
 
 当任务涉及古文字原形图、古籍、生僻隶定字、忠实转写或排印时，使用本插件。你负责结合上下文阅读和比较，不是把所有图当作常用汉字 OCR 的通用抄写员。其他任务无需套用本工作流。
 
+统一技能入口是 `/openglyph`，原 `/openglyph-paleography` 兼容。仅输入技能名时先自检并等用户给任务，不自动扫描所有文件。工具在插件启用后已经注册，用户不需要逐函数手工调用。云端检索需自己的CLI登录；纯本地已有字LaTeX排印不要求云账号。缺环境时准确报缺项，不把skill加载成功当成工具已就绪。
+
 - 文件入口是 gwz_open；先取用户指定物理页的 gwz_page_prepare(detail=image)。不自动运行版面模型，不为了凑对应寻找其他页。
 - 框字用 gwz_glyph_detect 的专用小模型；使用返回的原像素坐标和原字裁图。不要在缩略图上自己估算裁字框。检测可能漏检或残框，必须如实记录，不能用自信读法遮盖。
 - 对陌生、罕见、争议或来源特有的字形使用 gwz_glyph_search／gwz_glyph_template_search。候选相似度不是读法或 Unicode 的确认。不能用最相近常用字替换不一致的字。
 - **要排印而当前字体没有准确字形时，调用 gwz_glyph_compose，而不是只贴原图、输出占位空格或继续猜 OCR。** 优先图像模板检索 → inspect 真实编号部件 → 选/改 program 或原图绑定 proposal → compose。编号和 ASCII 引用让你不必先键入那个生僻汉字。旧 ids／structure 方案继续可用；底层数值 KAGE 不交给模型编写。
 - compose 返回 OTF/TTF、字形码位映射、可复制文本、嵌入字体 Word 和 LaTeX 包。PUA 仅属于随附字体，不能当作官方 Unicode 或学术释读。批量交付使用合并字体。优先 LaTeX/字体排印，保留 IDS 并行路线。
+- **论文PDF要执行完整本地排印链路，不能只交付ZIP。** 先用 `gwz_latex_setup` 自检；`gwz_latex_prepare` 准备随包真实字库/宏包/main.tex，`gwz_latex_lookup` 查实际编号。普通排印写 `\usepackage{openglyph}`、`\OpenGlyphLoad{ebag}`、`\ebag{s030-067}`。新字库先 `\OpenGlyphLoad{myglyphs}`，再 `\gwglyph{my:n1}`。编辑源码后必须 `gwz_latex_compile` 实际编译PDF并检查诊断；不凭“写出了tex”声称完成。需要本地新字时 `gwz_latex_inspect` 看真实编号后 `gwz_latex_build` 编译高层JSON。远端font ZIP可由prepare导入。首次缺构字依赖可在workspace创建独立环境，不改全局Python；缺系统TeX引擎则明确提示安装/路径设置。
 - **gwz_transcribe 只是保存你已经读出、校对的分段文本，绝不是 OCR。** 保存成功、字体 ready、DINO 高分都不表示字形已核定。用 gwz_glyph_verify 对照实际最终字体；把差分和待核意见交给人。未获人工确认不可声称“全部正确”，也不要因仍待人核对而删除文件或不停重试。
 - 页、文档身份、原图字节、字形身份、字号/码位、阅读顺序与学术解释分开保存。竖排按实际分区、列序和字序记录，保留缺字标记、空侧和一对多对应。
 - 工具会把预览图直接作为图像返回。先看图再选择；若 image_failures 或模型路线不支持看图，要说明证据缺口，不能装作看过。候选和预览分页只影响当前展示；用 gwz_evidence 继续查看，full_json 保留全部数据。

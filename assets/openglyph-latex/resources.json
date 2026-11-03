@@ -1,0 +1,258 @@
+{
+  "schema": "openglyph.dsh.latex-resources.v1",
+  "source_repository": "https://github.com/Open-Glyph/OpenGlyph-LaTeX",
+  "source_commit": "824fa2d3d8b0d5d23e9b74462522e6c3ef835627",
+  "source_version": "0.2.0",
+  "glyph_count": 22583,
+  "font_sha256": "4a7dec81374d071aa163e6198d26b8c5037bc079e7d32fc68dab0163180048c1",
+  "files": [
+    {
+      "path": "openglyph.sty",
+      "stored": "openglyph.sty",
+      "compression": null,
+      "bytes": 4555,
+      "sha256": "e5c2be4aa4dd487c69e8bf6b4c16a45f3dc4e39a57d6c4e38db728d7e0381af3",
+      "stored_sha256": "e5c2be4aa4dd487c69e8bf6b4c16a45f3dc4e39a57d6c4e38db728d7e0381af3"
+    },
+    {
+      "path": "LICENSE",
+      "stored": "LICENSE",
+      "compression": null,
+      "bytes": 1079,
+      "sha256": "b938a8daf8fb2ffeef4d5653c2667b8c2541e0db15932efb37141038f2d4fce3",
+      "stored_sha256": "b938a8daf8fb2ffeef4d5653c2667b8c2541e0db15932efb37141038f2d4fce3"
+    },
+    {
+      "path": "THIRD-PARTY-NOTICES.md",
+      "stored": "THIRD-PARTY-NOTICES.md",
+      "compression": null,
+      "bytes": 2506,
+      "sha256": "d384db1411a01361739159c756fd22d9a709f6b817c4a6f3aced12570d09765b",
+      "stored_sha256": "d384db1411a01361739159c756fd22d9a709f6b817c4a6f3aced12570d09765b"
+    },
+    {
+      "path": "requirements-build.txt",
+      "stored": "requirements-build.txt",
+      "compression": null,
+      "bytes": 106,
+      "sha256": "58d0dbe6ed435ed3ad1f7f599cf3a239dd3ea1b19a7ece44b080f158566fcc53",
+      "stored_sha256": "58d0dbe6ed435ed3ad1f7f599cf3a239dd3ea1b19a7ece44b080f158566fcc53"
+    },
+    {
+      "path": "README.md",
+      "stored": "README.md",
+      "compression": null,
+      "bytes": 6948,
+      "sha256": "f20da5b947f178277ab289564440de51971ea22bcd17aa571cdf96a899cf70c4",
+      "stored_sha256": "f20da5b947f178277ab289564440de51971ea22bcd17aa571cdf96a899cf70c4"
+    },
+    {
+      "path": "ebag/OpenGlyphEbag.otf",
+      "stored": "ebag/OpenGlyphEbag.otf.gz",
+      "compression": "gzip",
+      "bytes": 44441348,
+      "sha256": "4a7dec81374d071aa163e6198d26b8c5037bc079e7d32fc68dab0163180048c1",
+      "stored_sha256": "4682db1bd5cddf7a6601bbc9000d78ed5d04b91182bfd4e52468b44954ff21fa"
+    },
+    {
+      "path": "ebag/catalog.tex",
+      "stored": "ebag/catalog.tex.gz",
+      "compression": "gzip",
+      "bytes": 1151860,
+      "sha256": "76461f106d2520328b0515bd37999c19f1195db9f7cdb7d68c9d04392aa4a749",
+      "stored_sha256": "1cd66539abd59c7bb5bc59536d59e4cd39764bc1ce4dcf8b3d31d57ef02c1962"
+    },
+    {
+      "path": "ebag/manifest.json",
+      "stored": "ebag/manifest.json.gz",
+      "compression": "gzip",
+      "bytes": 14012237,
+      "sha256": "b3d7704a214e0960f7391d82af8c43f88cf78dd9673914baf964f7bb260c1042",
+      "stored_sha256": "26b0742579b7b88ac5f6f0e5385a17d71b36caebc18a92234ba9d15095062832"
+    },
+    {
+      "path": "data/glyphwiki-ebag.kage.jsonl.gz",
+      "stored": "data/glyphwiki-ebag.kage.jsonl.gz",
+      "compression": null,
+      "bytes": 1047670,
+      "sha256": "bda2c3a7a485639fbc882b44d1ebc2133592d5ea92904ae6711db679c5a1de91",
+      "stored_sha256": "bda2c3a7a485639fbc882b44d1ebc2133592d5ea92904ae6711db679c5a1de91"
+    },
+    {
+      "path": "data/provenance.json",
+      "stored": "data/provenance.json",
+      "compression": null,
+      "bytes": 1525,
+      "sha256": "8047ae2b425e8e5b8ca100a00d8bbd9acbf49661962336b099892e37f4b85df4",
+      "stored_sha256": "8047ae2b425e8e5b8ca100a00d8bbd9acbf49661962336b099892e37f4b85df4"
+    },
+    {
+      "path": "scripts/openglyph.py",
+      "stored": "scripts/openglyph.py",
+      "compression": null,
+      "bytes": 7133,
+      "sha256": "e5509bb71a0593d7f17a67b949d5e2e48399095cce08da48f0aeb06c31e220eb",
+      "stored_sha256": "e5509bb71a0593d7f17a67b949d5e2e48399095cce08da48f0aeb06c31e220eb"
+    },
+    {
+      "path": "examples/newforms.json",
+      "stored": "examples/newforms.json",
+      "compression": null,
+      "bytes": 507,
+      "sha256": "8d8880f97779b03ae0eb7da31b0f54384c62b64748263a6e2307af3236117bb0",
+      "stored_sha256": "8d8880f97779b03ae0eb7da31b0f54384c62b64748263a6e2307af3236117bb0"
+    },
+    {
+      "path": "examples/modules.json",
+      "stored": "examples/modules.json",
+      "compression": null,
+      "bytes": 448,
+      "sha256": "a7ea790e48a02b08e494df4a452b1f098ac3fd347764e258ffc79a306dda9165",
+      "stored_sha256": "a7ea790e48a02b08e494df4a452b1f098ac3fd347764e258ffc79a306dda9165"
+    },
+    {
+      "path": "licenses/GlyphWiki.txt",
+      "stored": "licenses/GlyphWiki.txt",
+      "compression": null,
+      "bytes": 786,
+      "sha256": "1435fc6023e5e48fbf3f98ceeb2b2401a11884bb2d9d9d964a13b539a2e249cc",
+      "stored_sha256": "1435fc6023e5e48fbf3f98ceeb2b2401a11884bb2d9d9d964a13b539a2e249cc"
+    },
+    {
+      "path": "licenses/GlyphWiki-README.txt",
+      "stored": "licenses/GlyphWiki-README.txt",
+      "compression": null,
+      "bytes": 2168,
+      "sha256": "1b0abc8fd6c2f271a46b3c62c060a0db9e950adbefcb2bf3fb2828c333e80421",
+      "stored_sha256": "1b0abc8fd6c2f271a46b3c62c060a0db9e950adbefcb2bf3fb2828c333e80421"
+    },
+    {
+      "path": "scripts/oglib/__init__.py",
+      "stored": "scripts/oglib/__init__.py",
+      "compression": null,
+      "bytes": 101,
+      "sha256": "babe6d7e052a9f3c29760591dc783f27acde1048f2dbd8972f919377c48c1cc4",
+      "stored_sha256": "babe6d7e052a9f3c29760591dc783f27acde1048f2dbd8972f919377c48c1cc4"
+    },
+    {
+      "path": "scripts/oglib/catalog.py",
+      "stored": "scripts/oglib/catalog.py",
+      "compression": null,
+      "bytes": 2531,
+      "sha256": "57e40c3c8650f75b1d7ee7b1aee860f170c5a55d838865e65826fe2f2b63c6b0",
+      "stored_sha256": "57e40c3c8650f75b1d7ee7b1aee860f170c5a55d838865e65826fe2f2b63c6b0"
+    },
+    {
+      "path": "scripts/oglib/font.py",
+      "stored": "scripts/oglib/font.py",
+      "compression": null,
+      "bytes": 4539,
+      "sha256": "80c7b56d9621fab8ff0f8f722555cb410902633be340415570397a6c06da2593",
+      "stored_sha256": "80c7b56d9621fab8ff0f8f722555cb410902633be340415570397a6c06da2593"
+    },
+    {
+      "path": "scripts/oglib/kage.py",
+      "stored": "scripts/oglib/kage.py",
+      "compression": null,
+      "bytes": 5293,
+      "sha256": "5e863a3adbee5ee20ef20f010409089eeb990505c0622dcbf4ae4697f0c09973",
+      "stored_sha256": "5e863a3adbee5ee20ef20f010409089eeb990505c0622dcbf4ae4697f0c09973"
+    },
+    {
+      "path": "scripts/oglib/project.py",
+      "stored": "scripts/oglib/project.py",
+      "compression": null,
+      "bytes": 3572,
+      "sha256": "2a0667ae07fac58bf8812d5ea14f90df4bfd86f5f0b04d8215fa61e49a72ab8a",
+      "stored_sha256": "2a0667ae07fac58bf8812d5ea14f90df4bfd86f5f0b04d8215fa61e49a72ab8a"
+    },
+    {
+      "path": "scripts/oglib/template_modules.py",
+      "stored": "scripts/oglib/template_modules.py",
+      "compression": null,
+      "bytes": 5883,
+      "sha256": "b7bbbf8a6b8e3b898356c52bb92097015e8608aa4b3b1c058568b82b12ff0ee8",
+      "stored_sha256": "b7bbbf8a6b8e3b898356c52bb92097015e8608aa4b3b1c058568b82b12ff0ee8"
+    },
+    {
+      "path": "scripts/oglib/template_program.py",
+      "stored": "scripts/oglib/template_program.py",
+      "compression": null,
+      "bytes": 14328,
+      "sha256": "bfa2f3ad349c1ab6476bee5c7207ab2f6e72bbf0f93c373d756475d505b21275",
+      "stored_sha256": "bfa2f3ad349c1ab6476bee5c7207ab2f6e72bbf0f93c373d756475d505b21275"
+    },
+    {
+      "path": "vendor/kage-engine/2d.js",
+      "stored": "vendor/kage-engine/2d.js",
+      "compression": null,
+      "bytes": 3585,
+      "sha256": "dd17c52d85a6fcdf8a76e30189a24ba2f73856e0d298e80a72e0a562bcb70942",
+      "stored_sha256": "dd17c52d85a6fcdf8a76e30189a24ba2f73856e0d298e80a72e0a562bcb70942"
+    },
+    {
+      "path": "vendor/kage-engine/COPYING",
+      "stored": "vendor/kage-engine/COPYING",
+      "compression": null,
+      "bytes": 35147,
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+      "stored_sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+    },
+    {
+      "path": "vendor/kage-engine/buhin.js",
+      "stored": "vendor/kage-engine/buhin.js",
+      "compression": null,
+      "bytes": 419,
+      "sha256": "6fa8e13bd964525299fa697dc40ea2c8b436d2ccb5952fe95f45d7fbf67b9456",
+      "stored_sha256": "6fa8e13bd964525299fa697dc40ea2c8b436d2ccb5952fe95f45d7fbf67b9456"
+    },
+    {
+      "path": "vendor/kage-engine/curve.js",
+      "stored": "vendor/kage-engine/curve.js",
+      "compression": null,
+      "bytes": 6015,
+      "sha256": "77477845aff9c4d53616c91247510bd10daeb4282423bdfcde7a8bebcd21f0da",
+      "stored_sha256": "77477845aff9c4d53616c91247510bd10daeb4282423bdfcde7a8bebcd21f0da"
+    },
+    {
+      "path": "vendor/kage-engine/kage.js",
+      "stored": "vendor/kage-engine/kage.js",
+      "compression": null,
+      "bytes": 17027,
+      "sha256": "c36a60ff9ae7d392740d8aad62e823553dc25c991eba40482fcbc8a1a1db6d78",
+      "stored_sha256": "c36a60ff9ae7d392740d8aad62e823553dc25c991eba40482fcbc8a1a1db6d78"
+    },
+    {
+      "path": "vendor/kage-engine/kagecd.js",
+      "stored": "vendor/kage-engine/kagecd.js",
+      "compression": null,
+      "bytes": 46537,
+      "sha256": "489fdd76e307642f6adaa99d280a41b1dda0760b4ca64b4711f0f49c08d9c860",
+      "stored_sha256": "489fdd76e307642f6adaa99d280a41b1dda0760b4ca64b4711f0f49c08d9c860"
+    },
+    {
+      "path": "vendor/kage-engine/kagedf.js",
+      "stored": "vendor/kage-engine/kagedf.js",
+      "compression": null,
+      "bytes": 22556,
+      "sha256": "e6d7cb5eeacda24705306302fd85a01c78f2adcdfdba43d1cac1d3616b6bf847",
+      "stored_sha256": "e6d7cb5eeacda24705306302fd85a01c78f2adcdfdba43d1cac1d3616b6bf847"
+    },
+    {
+      "path": "vendor/kage-engine/polygon.js",
+      "stored": "vendor/kage-engine/polygon.js",
+      "compression": null,
+      "bytes": 1325,
+      "sha256": "f0afbe3b0c6f4723005ec927d2292eb991ecf5c598c16cfefb7bc55cfef75bf2",
+      "stored_sha256": "f0afbe3b0c6f4723005ec927d2292eb991ecf5c598c16cfefb7bc55cfef75bf2"
+    },
+    {
+      "path": "vendor/kage-engine/polygons.js",
+      "stored": "vendor/kage-engine/polygons.js",
+      "compression": null,
+      "bytes": 3728,
+      "sha256": "111b9b0aaca536805cf92ab9d1e7be099f9e082a2169cc7c0bf49e3deee20b1a",
+      "stored_sha256": "111b9b0aaca536805cf92ab9d1e7be099f9e082a2169cc7c0bf49e3deee20b1a"
+    }
+  ]
+}

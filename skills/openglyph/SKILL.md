@@ -1,9 +1,38 @@
 ---
-name: openglyph-paleography
-description: 使用 OpenGlyph 原生工具完成古文字原形、隶定字的查形、结构造字、字体与 LaTeX 排印。用于忠实字形采集或可排印输出，不用于普通摘要或把通用 OCR 当作核定。
+name: openglyph
+description: OpenGlyph统一入口：环境自检、古文字图像框字与检索、隶定字结构造字、现有字库与新字混排、LaTeX论文项目和PDF编译。用于古文字证据及排印，不把通用OCR当核定。
 ---
 
 # 古文字证据与排印
+
+## 统一入口与首次自检
+
+用户输入 `/openglyph` 就会加载这份完整流程；不要要求用户分别手工调用每个工具。若用户只输入技能名而未给任务，先调用 `gwz_check`，简要报告哪些能力可用、缺什么，再等待用户给文件或排版需求；不自动扫描工作文件夹、处理整本书或启动付费模型测试。
+
+原生工具随插件启用就已经注册，技能负责操作指导。首次云端检索需要用户自己的CLI登录；纯本地已有字排印不要求云账号。`gwz_latex_setup` 检查编译器和本地依赖，`install_dependencies=true` 只在工作文件夹中创建独立Python环境，不改全局环境。缺编译器时清楚报出安装/路径设置，不假称完整就绪。
+
+## 真正排论文，不只交付ZIP
+
+需要论文PDF时，使用 `gwz_latex_prepare(project_dir=新目录)`。它会把真实 `openglyph.sty`、22,583字OTF和catalog放进项目，并返回可编辑的 `main.tex`。不要要求用户另找LaTeX仓库。若先前已由 `gwz_deliver` 得到字体ZIP，可作为 `font_bundle` 导入，自动载入新字目录。
+
+已存在论文则保留用户原稿，确认项目已经有宏包与字体，不重复新建/覆盖；用DSH文件工具编辑指定 `.tex`。
+
+最小排印语法必须直接使用：
+
+```tex
+\documentclass[UTF8,fontset=fandol]{ctexart}
+\usepackage{openglyph}
+\OpenGlyphLoad{ebag}
+\begin{document}
+已有码字形：\ebag{s030-067}。
+\end{document}
+```
+
+用 `gwz_latex_lookup` 查实际编号和现成排印命令，不能猜 `ebag` 编号。新造字先 `\OpenGlyphLoad{myglyphs}`，再 `\gwglyph{my:n1}`，与正常汉字穿插写入正文。命令中的编号是ASCII来源/别名，不是学术释读，不需要先打出生僻字。
+
+写好源码后**调用 `gwz_latex_compile(tex_file=实际文件路径)`**，这一步才会真的生成PDF。用Tectonic/XeLaTeX，不用pdfLaTeX、不启用shell-escape。检查返回的缺字、未知编号、溢出、页数和字体嵌入报告。出错就根据完整日志修复相关源码/字库，再编译；不重复同样失败步骤，不拿旧PDF冒充新结果。未执行编译就不能声称“已排好论文”。编译成功也不代表字形/学术释读已由人核定。
+
+更多本地新字JSON、源码、已有/自造字混排示例见 [LaTeX完整操作](references/latex.md)。
 
 本环境已经把工具注册为 gwz_* 原生调用，不必先自己研究终端命令。用 gwz_catalog 查看某个工具完整输入、输出说明与示例；用 gwz_check 检查用户现有 CLI 登录。
 
@@ -20,6 +49,8 @@ description: 使用 OpenGlyph 原生工具完成古文字原形、隶定字的�
 检索 whole glyph 是找底字，scope=component 是找部件。inspect 返回真实编号 node、部件图和可供选择的修改建议。修改只针对这些实际编号；根节点和子部件需要逐层展开。不要把 r0 等记录编号猜成某种语义笔画。
 
 需要全图库来源和异体时用 gwz_glyph_search，查看真实候选后再 glyph_select；其绑定和 gwz 身份仍不等于学术释读。没有匹配可以 glyph_register 保存原图，但这一步不会生成字体。
+
+离线已有字库可用 `gwz_latex_lookup` → `gwz_latex_inspect` 查实际部件编号。离线新字项目用 `gwz_latex_build`；有账号时图像检索及原图比较仍优先使用已部署的专用工具。两种构字来源最终都能接进同一个LaTeX项目。
 
 ## 从缺字到可打印字体
 

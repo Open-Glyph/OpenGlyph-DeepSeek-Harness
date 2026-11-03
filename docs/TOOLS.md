@@ -2,7 +2,7 @@
 
 由公开工具 Schema 与插件用途说明生成；每次远端执行前还会用实时 Schema 校验。示例中的文字身份说明是占位提示，必须换为工具实际返回的 ID，不能逐字照抄。
 
-所有工具名为 `gwz_` + 下列服务端名称。规范返回保留 `status`、`job_id`、`full_json`、`result`，另有紧凑 `summary`、图像附件、分页与 `next_tools`。原始记录不因当前预览分页而丢失。
+统一入口 `/openglyph` 会加载完整使用流程。原子工具名为 `gwz_` + 下列服务端名称。远端规范返回保留 `status`、`job_id`、`full_json`、`result`，另有紧凑 `summary`、图像附件、分页与 `next_tools`。原始记录不因当前预览分页而丢失。
 
 ## gwz_document_open：登记文献
 
@@ -500,3 +500,63 @@
 ```
 
 后续工具：`gwz_open`、`gwz_page_prepare`。
+
+## 本地LaTeX工具（无需云账号）
+
+这些工具直接准备项目、操作随包字库、编译新字和PDF；不是远端OCR。首次依赖检查见setup。
+
+### gwz_latex_setup：检查/准备本地排印环境
+
+检查随包22,583字字库、Tectonic/XeLaTeX、Python/Node和字体检查依赖，逐项报告可用能力。install_dependencies=true 时只在当前工作文件夹创建独立Python环境并安装离线构字/PDF检查依赖，不改全局、不装操作系统编译器、不调用云模型。普通已有字排印不需要构字依赖。
+
+| 参数 | 必填 | 说明 |
+|---|---|---|
+| `install_dependencies` | 否 | 默认 false |
+
+### gwz_latex_prepare：准备可编译的LaTeX论文项目
+
+将真实openglyph.sty、22,583字OTF/catalog和许可放进新项目，生成main.tex。可导入gwz_deliver返回的LaTeX字体ZIP，自动加载其catalog。返回project_dir与tex_file；不覆盖已有论文。不需要账号或云调用。随后编辑正文并调用gwz_latex_compile。
+
+| 参数 | 必填 | 说明 |
+|---|---|---|
+| `project_dir` | 是 | 当前工作文件夹内的新目录，如 outputs/论文排印。必须尚不存在。 |
+| `title` | 否 | 论文标题，作为文字安全转义；不是TeX代码。 |
+| `font_bundle` | 否 | 可选：服务实际交付的LaTeX字体ZIP，必须在工作文件夹中。 |
+
+### gwz_latex_lookup：查询随包字库的排印编号
+
+离线查来源编号、GlyphWiki名或部件，返回精确的\ebag{s030-067}等排印命令及未核定状态，不猜学术读法。query省略时分页列举全部22,583字；不是图像相似度检索。图像检索请用glyph_template_search；下一步可本地inspect部件。
+
+| 参数 | 必填 | 说明 |
+|---|---|---|
+| `query` | 否 | 如 s030-067、ebag:s030-067、ebag_s030-067、u81e4、U+81E4 或已知部件字符。 |
+| `offset` | 否 | 默认 0 |
+
+### gwz_latex_inspect：查看离线底字与编号部件
+
+对随包底字运行真实KAGE部件检查并返回编号预览，不需要云账号。base用实际查询到的ebag:编号；逐层展开node，不能猜部件编号。无需fonttools/pathops，仅需Python和Node。查看后再编辑高层JSON，不写底层KAGE。
+
+| 参数 | 必填 | 说明 |
+|---|---|---|
+| `base` | 是 | 如 ebag:s030-067；须先查到并看形。 |
+| `node` | 否 | 默认 "root" |
+| `image_offset` | 否 | 默认 0 |
+
+### gwz_latex_build：把JSON新字项目编译成OTF和LaTeX目录
+
+编译openglyph.project.v1的namespace/glyphs/base/edits/modules/select为真实OTF、catalog.tex、allocation.json及来源。支持换部件、饰笔、删笔、比例调整。先实际inspect编号；输出目录必须新建。返回\OpenGlyphLoad和\gwglyph命令；生成不代表人工核定。依赖不足先latex_setup。远端glyph_compose及旧IDS路线仍可并行。
+
+| 参数 | 必填 | 说明 |
+|---|---|---|
+| `project_file` | 是 | 已用DSH文件工具写好的JSON项目文件；建议与main.tex同目录。 |
+| `output_dir` | 是 | 新字库目录，如 outputs/论文/myglyphs；不能覆盖旧目录。 |
+| `allocation_file` | 否 | 可选旧allocation.json，修订字库时保留已分配码位。 |
+
+### gwz_latex_compile：编译论文PDF并检查缺字与字体
+
+真正编译指定.tex到新的PDF，不是只下载ZIP。用Tectonic --untrusted或XeLaTeX -no-shell-escape，遵守宿主命令沙箱；不设任务总时限。保留完整日志、旧PDF，报告缺字/未知编号/溢出、页数与可用的字体嵌入检查。返回PDF路径；编译成功不等于字形/释读核定。不要用pdfLaTeX。
+
+| 参数 | 必填 | 说明 |
+|---|---|---|
+| `tex_file` | 是 | 工作文件夹中的.tex源码；一般是latex_prepare返回的tex_file。 |
+| `allow_downloads` | 否 | 允许Tectonic按需下载TeX资源；false仅使用已缓存资源。默认按插件配置。 |

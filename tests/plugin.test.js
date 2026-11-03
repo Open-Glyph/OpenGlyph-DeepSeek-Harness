@@ -43,8 +43,10 @@ async function setup(t) {
   class WorkingDirectory extends Service {
     constructor(context){super(context,'workingDirectory')}
     get(){return root}
+    async ensure(){return root}
   }
-  await ctx.plugin(Process);await ctx.plugin(Attachments);await ctx.plugin(WorkingDirectory)
+  class Shell extends Service {constructor(context){super(context,'shell')}}
+  await ctx.plugin(Process);await ctx.plugin(Shell);await ctx.plugin(Attachments);await ctx.plugin(WorkingDirectory)
   const fiber=await ctx.plugin(plugin,{workspaceRoot:root})
   let count=0
   const call=(name,args,signal=new AbortController().signal)=>ctx.tools.execute({
@@ -53,9 +55,14 @@ async function setup(t) {
   return {root,ctx,fiber,call}
 }
 
-test('registers all 20 atomic tools and seven helpers, and unload removes every contribution',async t=>{
+test('registers 33 tools and unload removes every contribution',async t=>{
   const {ctx,fiber}=await setup(t)
-  assert.equal(ctx.tools.schemas().filter(s=>s.name.startsWith('gwz_')).length,27)
+  assert.equal(ctx.tools.schemas().filter(s=>s.name.startsWith('gwz_')).length,33)
+  const skill=await ctx.skills.get('openglyph')
+  assert.ok(skill.invocation.userInvocable)
+  assert.match(skill.content,/gwz_latex_compile/)
+  assert.match(skill.content,/OpenGlyphLoad/)
+  assert.ok(await ctx.skills.get('openglyph-paleography'))
   const compose=ctx.tools.get('gwz_glyph_compose')
   assert.match(compose.description,/OTF\/TTF/)
   assert.ok(compose.parameters.properties.program)

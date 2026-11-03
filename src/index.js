@@ -5,9 +5,11 @@ import Schema from '@deepseek-ai/schemastery'
 import { Controller } from './controller.js'
 import { modelSchema,validator } from './schema.js'
 import { render } from './results.js'
+import { Latex } from './latex.js'
+import { latexTools } from './latex-tools.js'
 
 export const name='openglyph'
-export const inject=['tools','systemPrompt','skills','subprocess','attachments','workingDirectory']
+export const inject=['tools','systemPrompt','skills','subprocess','shell','attachments','workingDirectory']
 export const Config=Schema.object({
   cli:Schema.string().default('guwenzi-tools'),
   profile:Schema.string().default(''),
@@ -18,12 +20,20 @@ export const Config=Schema.object({
   imagePageSize:Schema.number().min(1).step(1).default(4),
   resultPageSize:Schema.number().min(1).step(1).default(32),
   cancelGraceMs:Schema.number().min(1).default(3000),
+  latexRuntimeDirectory:Schema.string().default('work/openglyph-runtime'),
+  latexEngine:Schema.union(['auto','tectonic','xelatex']).default('auto'),
+  tectonic:Schema.string().default('tectonic'),
+  xelatex:Schema.string().default('xelatex'),
+  python:Schema.string().default('python3'),
+  node:Schema.string().default('node'),
+  allowTexDownloads:Schema.boolean().default(true),
+  diagnosticCharacters:Schema.number().min(1).step(1).default(4000),
 })
 
 export const catalog=JSON.parse(readFileSync(new URL('../data/service-tools.json',import.meta.url),'utf8'))
 export const guides=JSON.parse(readFileSync(new URL('../data/tool-guides.json',import.meta.url),'utf8'))
 const persona=readFileSync(new URL('../data/workflow.md',import.meta.url),'utf8')
-const skillPath=fileURLToPath(new URL('../skills/openglyph-paleography/SKILL.md',import.meta.url))
+const skillPath=fileURLToPath(new URL('../skills/openglyph/SKILL.md',import.meta.url))
 
 const object=(properties,required=[])=>({type:'object',properties,required,additionalProperties:false})
 const string=description=>({type:'string',minLength:1,description})
@@ -45,6 +55,7 @@ const helperSchemas={
 /** Register all contributions as Cordis effects; unloading removes them together. */
 export function apply(ctx,config) {
   const controller=new Controller(ctx,config,catalog,guides)
+  const latex=new Latex(ctx,config,controller)
   const register=(tool,description,schema,execute,title)=>{
     const check=validator(schema)
     ctx.tools.register({name:tool,description,parameters:modelSchema(schema),
@@ -57,7 +68,7 @@ export function apply(ctx,config) {
           throw new Error(error.message+(Object.keys(details).length?'\n恢复信息：'+JSON.stringify(details):''))
         }
       },
-      isConcurrencySafe:()=>tool!=='gwz_deliver',
+      isConcurrencySafe:()=>tool!=='gwz_deliver'&&!tool.startsWith('gwz_latex_'),
       presentCall:()=>({card:'generic',title,kind:tool.includes('search')?'search':'execute'}),
     })
   }
@@ -71,16 +82,22 @@ export function apply(ctx,config) {
   }
   register('gwz_check','检查 CLI 登录、健康和连接，不跑全资源校验或模型。未登录时由用户在终端运行 guwenzi-tools login，不向模型提供密钥。',helperSchemas.gwz_check,async(_args,exec)=>{
     const context=await controller.stage(exec,'连接检查')
-    const value=await controller.run(context,['doctor','--quick'])
-    return {status:'checked',summary:value.result||value,images:[]}
+    let remote
+    try{const value=await controller.run(context,['doctor','--quick']);remote={status:'ready',summary:value.result||value}}
+    catch(error){remote={status:'needs_setup',message:error.message,fix:'在终端完成 guwenzi-tools login；本地已有字LaTeX排印不要求云账号。'}}
+    const local=await latex.setup({},exec)
+    return {status:remote.status==='ready'&&local.status==='ready'?'ready':'partial',remote,latex:local,images:[]}
   },'检查 OpenGlyph 连接')
   register('gwz_catalog','查每个工具的用途、完整输入 Schema、返回字段、调用示例和后续动作；不是 OCR，也不运行模型。',helperSchemas.gwz_catalog,async args=>{
     if(args.tool_name){
+      const local=latexTools.find(r=>r.name===args.tool_name||r.name==='gwz_'+args.tool_name)
+      if(local)return {status:'reference',tool:local.name,title:local.title,purpose:local.description,input_schema:local.parameters,images:[]}
       const row=catalog.tools.find(r=>r.name===args.tool_name)
       if(!row)throw new Error('工具不存在；使用不带 tool_name 的 gwz_catalog 列举。')
       return {status:'reference',schema_source:catalog.source,tool:row.name,...guides[row.name],input_schema:row.input_schema,images:[]}
     }
-    return {status:'reference',schema_source:catalog.source,tools:catalog.tools.map(r=>({name:'gwz_'+r.name,title:guides[r.name].title,purpose:guides[r.name].purpose})),
+    return {status:'reference',schema_source:catalog.source,tools:[...catalog.tools.map(r=>({name:'gwz_'+r.name,title:guides[r.name].title,purpose:guides[r.name].purpose})),
+      ...latexTools.map(r=>({name:r.name,title:r.title,purpose:r.description}))],
       examples:'示例中的占位身份必须换成工具实际返回的 ID。每次远端调用还会用实时 Schema 再校验。',images:[]}
   },'查看工具接口说明')
   register('gwz_open','上传用户指定的本地 PDF/图像/Office 并登记身份。返回 document_id 或图像 asset_id；不会 OCR，不处理未指定页。文件发送到用户已登录的 OpenGlyph 服务，不读模型密钥。',helperSchemas.gwz_open,
@@ -93,9 +110,12 @@ export function apply(ctx,config) {
     (args,exec)=>controller.evidence(args,exec),'查看后续证据')
   register('gwz_deliver','从已生成字体的实际造字记录交付 OTF、TTF、码位映射、可复制文字、嵌入字体 Word 和 LaTeX 包；不把中间PNG充当排印成果，不覆盖旧目录文件。比较状态如实保留，学术验收交给人。',helperSchemas.gwz_deliver,
     (args,exec)=>controller.deliver(args,exec),'交付排印字体与 LaTeX 包')
+  for(const tool of latexTools)register(tool.name,tool.description,tool.parameters,(args,exec)=>latex[tool.method](args,exec),tool.title)
   ctx.systemPrompt.section({name:'openglyph-paleography',order:450,text:persona,interpolate:false})
   const raw=readFileSync(skillPath,'utf8')
   const body=raw.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/u,'')
-  ctx.skills.register({name:'openglyph-paleography',description:'古文字原形/隶定字的证据采集、字形检索、结构造字和字体/LaTeX排印；不是通用OCR。',
-    source:'bundled',path:skillPath,content:body,resourceBase:{kind:'directory',path:fileURLToPath(new URL('../skills/openglyph-paleography/',import.meta.url))}})
+  for(const skillName of ['openglyph','openglyph-paleography'])ctx.skills.register({name:skillName,
+    description:skillName==='openglyph'?'OpenGlyph统一入口：自检、古文字框字/检索/造字、LaTeX完整排论文与PDF编译。':'OpenGlyph旧入口，兼容原会话；新会话优先 /openglyph。',
+    invocation:{modelInvocable:true,userInvocable:true},source:'bundled',path:skillPath,content:body,
+    resourceBase:{kind:'directory',path:fileURLToPath(new URL('../skills/openglyph/',import.meta.url))}})
 }

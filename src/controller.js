@@ -21,7 +21,7 @@ export class Controller {
   async stage(exec,label) {
     const cwd=this.config.workspaceRoot || (exec.agent?this.ctx.workingDirectory.get(exec.agent.session):process.cwd())
     const directory=await outputDirectory(cwd,join(this.config.evidenceDirectory,label+'-'+randomUUID()))
-    return {cwd,directory,signal:exec.signal}
+    return {cwd,directory,signal:exec.signal,agent:exec.agent}
   }
 
   async run(context,args,input) {return this.cli.run(args,{...context,input})}
