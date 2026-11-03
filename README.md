@@ -14,11 +14,11 @@
 - `glyph_compose` 真正生成 SVG、OTF/TTF、码位映射、可复制文本、嵌入字体 Word 和 LaTeX 包。
 - DINO 返回相似候选，不能用高分代替原图—最终字体比较，更不能代替人工核定。
 
-v0.2.0 注册 **33 个原生工具**：20 个远端原子工具、7 个辅助工具和6个本地LaTeX工具，统一技能入口为 **`/openglyph`**。现在不仅能交付字体包，还能准备真正的论文项目、使用随包22,583字字库、离线编译JSON新字、编译PDF并检查缺字和嵌入字体。完整参考见 [工具参数与返回](docs/TOOLS.md)。
+v0.2.1 注册 **33 个原生工具**：20 个远端原子工具、7 个辅助工具和6个本地LaTeX工具，统一技能入口为 **`/openglyph`**。现在不仅能交付字体包，还能准备真正的论文项目、使用随包22,583字字库、离线编译JSON新字、编译PDF并检查缺字和嵌入字体。部件预览使用WASM，不要求修改macOS桌面版的代码签名安全设置。完整参考见 [工具参数与返回](docs/TOOLS.md)。
 
 ## 安装：这些命令粘贴到终端
 
-实际测试的 Harness SDK 为 **0.2.1-rc.5**，Node.js 要求 **24.9+**，含同版本桌面应用。没有声称兼容未测试的alpha。桌面版可直接在应用的插件管理中安装/更新并启用本仓库，不要求另装命令行版DSH；更新后确认插件版本 **0.2.0**，重新加载插件或重启应用后开新会话。若 `/` 列表仍只有旧名，说明旧插件/会话目录缓存尚未刷新。
+实际测试的 Harness SDK 为 **0.2.1-rc.5**，Node.js 要求 **24.9+**，含同版本桌面应用。没有声称兼容未测试的alpha。桌面版可直接在应用的插件管理中安装/更新并启用本仓库，不要求另装命令行版DSH；更新后确认插件版本 **0.2.1**，重新加载插件或空闲时重启应用后开新会话。若 `/` 列表仍只有旧名，说明旧插件/会话目录缓存尚未刷新。
 
 命令行版按 [DeepSeek 官方说明](https://github.com/deepseek-ai/deepseek-harness) 安装。下文命令是可选的命令行安装路径。
 
@@ -39,7 +39,7 @@ guwenzi-tools doctor --quick
 例如你使用网页版的 `web` profile：
 
 ```sh
-dsh plugin --profile web add github:Open-Glyph/OpenGlyph-DeepSeek-Harness#v0.2.0
+dsh plugin --profile web add github:Open-Glyph/OpenGlyph-DeepSeek-Harness#v0.2.1
 dsh web
 ```
 

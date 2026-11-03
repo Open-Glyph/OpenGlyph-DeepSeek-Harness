@@ -14,6 +14,6 @@ No original paper scans, local unverified IDS tables, query-image collections, D
 
 ## Runtime dependencies
 
-`@resvg/resvg-js` 2.6.2 rasterizes real component SVG contact sheets. It is obtained from its npm distribution under MPL-2.0; its own license is not replaced by this repository license. AJV, Schemastery and DeepSeek Harness dependencies retain their respective licenses and are installed separately.
+`@resvg/resvg-wasm` 2.6.2 rasterizes real component SVG contact sheets without loading a native `.node` module into the signed desktop process. It is obtained from its npm distribution under MPL-2.0; its own license is not replaced by this repository license. Preview labels may use an already installed local system font; those font binaries are not redistributed. Numbered vector panels remain available without system fonts. AJV, Schemastery and DeepSeek Harness dependencies retain their respective licenses and are installed separately.
 
 FontTools, skia-pathops and pypdf are optional Python dependencies installed into a user-requested workspace virtual environment. Their binaries are not vendored. Tectonic/XeLaTeX must be installed or configured by the user; this plugin does not redistribute their executables or silently install an operating-system TeX distribution.
