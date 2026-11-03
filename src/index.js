@@ -7,6 +7,7 @@ import { modelSchema,validator } from './schema.js'
 import { render } from './results.js'
 import { Latex } from './latex.js'
 import { latexTools } from './latex-tools.js'
+import { toolJson } from './json-boundary.js'
 
 export const name='openglyph'
 export const inject=['tools','systemPrompt','skills','subprocess','shell','attachments','workingDirectory']
@@ -62,7 +63,7 @@ export function apply(ctx,config) {
       output:{schema:{type:'object',additionalProperties:true},render},
       async execute(args,exec){
         check(args)
-        try{return await execute(args,exec)}
+        try{return toolJson(await execute(args,exec))}
         catch(error){
           const details=error.details||{}
           throw new Error(error.message+(Object.keys(details).length?'\n恢复信息：'+JSON.stringify(details):''))

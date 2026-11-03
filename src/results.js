@@ -1,6 +1,8 @@
 /** Compact, explicitly paged observations; original results stay in receipts. */
 const fields = ['document_id','page','pages','source_sha256','source_asset_id','source_size_px','coordinate_space',
   'route','page_asset','asset','search_id','binding_id','gwz_code','code','glyph_ref','program','inspected_node',
+  'source_image_original','render_kind','render_dpi','pixel_resampling','source_pdf_sha256',
+  'image_to_pdf_transform','pdf_page_size_pt','native_text_asset','coordinate_note',
   'preprocessing','bbox_px','roi_bbox_px','candidate_count','total_candidates','next_offset','diagnostics',
   'recognition_status','content_verified','all_ok','batch','writing_mode','reading_order_verified']
 

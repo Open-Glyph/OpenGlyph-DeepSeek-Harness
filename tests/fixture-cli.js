@@ -7,7 +7,11 @@ const source=JSON.parse(await readFile(new URL('../data/service-tools.json',impo
 let argv=process.argv.slice(2).filter(x=>x!=='--quiet')
 if(argv[0]==='--profile')argv=argv.slice(2)
 const [command,...args]=argv
-const answer=value=>console.log(JSON.stringify(value))
+// Python JSON preserves negative zero; JSON.stringify alone would erase the
+// exact production value before our CLI/DSH boundary ever saw it.
+const wireJson=value=>JSON.stringify(value,(_key,item)=>Object.is(item,-0)?'__fixture_negative_zero__':item)
+  .replaceAll('"__fixture_negative_zero__"','-0.0')
+const answer=value=>console.log(wireJson(value))
 const sha=raw=>createHash('sha256').update(raw).digest('hex')
 const image=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZlJAAAAAASUVORK5CYII=','base64')
 const payloads={png:image,font:Buffer.from('OTTO-test-only-font'),mapping:Buffer.from('{"family":"test","glyphs":[]}'),text:Buffer.from('\ue000'),word:Buffer.from('test-only-docx'),zip:Buffer.from('test-only-latex')}
@@ -16,7 +20,9 @@ const program={schema:'guwenzi.template-program.v1',base:'ebag:s030-067',edits:[
 const resultFor=tool=>{
   if(tool==='document_open')return {document_id:'d'+'a'.repeat(32),pages:100,source_sha256:'f'.repeat(64)}
   if(tool==='asset_import')return assets.png
-  if(tool==='page_prepare')return {page:32,page_asset:assets.png,source_size_px:[1,1]}
+  if(tool==='page_prepare')return {page:32,page_asset:assets.png,source_size_px:[1,1],
+    source_image_original:true,render_kind:'pdf_embedded_original',pixel_resampling:false,render_dpi:null,
+    image_to_pdf_transform:[0.24,0,-0,0.24,0,0]}
   if(tool==='glyph_template_search')return {candidates:[{candidate_id:'c1',program,asset:assets.png,editable:true}],next_offset:null}
   if(tool==='glyph_template_inspect')return {program,nodes:[{node:'r4',asset:assets.png}],whole_asset:assets.png}
   if(tool==='glyph_compose')return {gwz_code:'gwz:test',asset:assets.png,print_font:{status:'ready',glyphs:[{codepoint:0xe000}],
@@ -35,7 +41,7 @@ else if(command==='upload'){
   const id='j'+randomBytes(16).toString('hex')
   await mkdir(join(process.cwd(),'.fixture-jobs'),{recursive:true})
   const envelope={ok:true,job_id:id,status:'complete',request:{name:args[0],arguments:arguments_},result:resultFor(args[0])}
-  await writeFile(join(process.cwd(),'.fixture-jobs',id+'.json'),JSON.stringify(envelope))
+  await writeFile(join(process.cwd(),'.fixture-jobs',id+'.json'),wireJson(envelope))
   await appendFile(join(process.cwd(),'.fixture-posts.jsonl'),JSON.stringify({job_id:id,tool:args[0],arguments:arguments_})+'\n')
   answer({ok:true,result:{job_id:id,status:'queued',receipt:'local-cli-receipt'}})
 }else if(command==='status'){

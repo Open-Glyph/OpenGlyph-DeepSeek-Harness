@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtemp,readFile,writeFile,mkdir,symlink,rm } from 'node:fs/promises'
+import { mkdtemp,readFile,writeFile,mkdir,symlink,rm,readdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -83,6 +83,16 @@ test('image → editable template → inspected nodes → compose → ordered fo
   const page=await call('gwz_page_prepare',{document_id:document.value.result.document_id,page:32})
   assert.equal(page.isError,false)
   assert.ok(page.content.some(b=>b.type==='image'))
+  assert.equal(page.value.result.image_to_pdf_transform[2],0)
+  assert.equal(Object.is(page.value.result.image_to_pdf_transform[2],-0),false)
+  assert.equal(page.value.summary.source_image_original,true)
+  assert.equal(page.value.summary.pixel_resampling,false)
+  assert.equal(page.value.summary.image_to_pdf_transform[2],0)
+  const pageFiles=await readdir(join(root,'work/openglyph'))
+  const pageDir=pageFiles.find(name=>name.startsWith('page_prepare-'))
+  const outputs=await readdir(join(root,'work/openglyph',pageDir))
+  const raw=await Promise.all(outputs.filter(f=>f.endsWith('.stdout.json')).map(f=>readFile(join(root,'work/openglyph',pageDir,f),'utf8')))
+  assert.ok(raw.some(text=>text.includes('-0.0')),'must exercise and retain Python-style negative-zero wire bytes')
   const image=page.value.result.page_asset.asset_id
   const search=await call('gwz_glyph_template_search',{asset_id:image})
   assert.equal(search.isError,false)

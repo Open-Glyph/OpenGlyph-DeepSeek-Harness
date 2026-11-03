@@ -4,6 +4,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { pipeline } from 'node:stream/promises'
 import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
+import { parseWireJson } from './json-boundary.js'
 
 export class CliFailure extends Error {
   constructor(message, details) { super(message); this.name = 'OpenGlyphCliError'; this.details = details }
@@ -34,8 +35,9 @@ export class Cli {
     catch (error) { process.terminate(); await Promise.allSettled([process.done, ...drains]); throw error }
     signal?.throwIfAborted()
     let value
-    try { value = JSON.parse(await readFile(stdout, 'utf8')) }
-    catch { throw new CliFailure('CLI 没有返回完整 JSON；查看本地日志，不要重复提交结果未知的任务。', { code: 'invalid_cli_response', stdout, stderr }) }
+    try { value = parseWireJson(await readFile(stdout, 'utf8')) }
+    catch(error) { throw new CliFailure(error instanceof SyntaxError?'CLI 没有返回完整 JSON；查看本地日志，不要重复提交结果未知的任务。':error.message,
+      { code: 'invalid_cli_response', stdout, stderr }) }
     if (outcome.exitCode !== 0 || value.ok === false) {
       throw new CliFailure(value.error?.message || 'CLI 调用失败', { ...value.error, stdout, stderr })
     }

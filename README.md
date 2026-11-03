@@ -14,11 +14,11 @@
 - `glyph_compose` 真正生成 SVG、OTF/TTF、码位映射、可复制文本、嵌入字体 Word 和 LaTeX 包。
 - DINO 返回相似候选，不能用高分代替原图—最终字体比较，更不能代替人工核定。
 
-v0.2.1 注册 **33 个原生工具**：20 个远端原子工具、7 个辅助工具和6个本地LaTeX工具，统一技能入口为 **`/openglyph`**。现在不仅能交付字体包，还能准备真正的论文项目、使用随包22,583字字库、离线编译JSON新字、编译PDF并检查缺字和嵌入字体。部件预览使用WASM，不要求修改macOS桌面版的代码签名安全设置。完整参考见 [工具参数与返回](docs/TOOLS.md)。
+v0.2.2 注册 **33 个原生工具**：20 个远端原子工具、7 个辅助工具和6个本地LaTeX工具，统一技能入口为 **`/openglyph`**。现在不仅能交付字体包，还能准备真正的论文项目、使用随包22,583字字库、离线编译JSON新字、编译PDF并检查缺字和嵌入字体。部件预览使用WASM，不要求修改macOS桌面版的代码签名安全设置。完整参考见 [工具参数与返回](docs/TOOLS.md)。
 
 ## 安装：这些命令粘贴到终端
 
-实际测试的 Harness SDK 为 **0.2.1-rc.5**，Node.js 要求 **24.9+**，含同版本桌面应用。没有声称兼容未测试的alpha。桌面版可直接在应用的插件管理中安装/更新并启用本仓库，不要求另装命令行版DSH；更新后确认插件版本 **0.2.1**，重新加载插件或空闲时重启应用后开新会话。若 `/` 列表仍只有旧名，说明旧插件/会话目录缓存尚未刷新。
+实际测试的 Harness SDK 为 **0.2.1-rc.5**，Node.js 要求 **24.9+**，含同版本桌面应用。没有声称兼容未测试的alpha。桌面版可直接在应用的插件管理中安装/更新并启用本仓库，不要求另装命令行版DSH；更新后确认插件版本 **0.2.2**，重新加载插件或空闲时重启应用后开新会话。若 `/` 列表仍只有旧名，说明旧插件/会话目录缓存尚未刷新。
 
 命令行版按 [DeepSeek 官方说明](https://github.com/deepseek-ai/deepseek-harness) 安装。下文命令是可选的命令行安装路径。
 
@@ -39,7 +39,7 @@ guwenzi-tools doctor --quick
 例如你使用网页版的 `web` profile：
 
 ```sh
-dsh plugin --profile web add github:Open-Glyph/OpenGlyph-DeepSeek-Harness#v0.2.1
+dsh plugin --profile web add github:Open-Glyph/OpenGlyph-DeepSeek-Harness#v0.2.2
 dsh web
 ```
 
@@ -127,6 +127,8 @@ gwz_latex_setup → gwz_latex_prepare → 编辑main.tex → gwz_latex_compile �
 
 插件不新增页数、字数、上传体积、迭代次数、总处理时长或金额限制。预览分页只是上下文展示方式，完整记录不裁掉。实际模型/宿主的附件能力、CLI 连接和服务端账号权限仍以各自配置为准。
 
+v0.2.2修复原PDF图片坐标矩阵含`-0.0`时，DSH误报`value is not lossless JSON`的问题。只将数值负零规范为零，不重渲染图片、不改DPI或坐标含义；原始CLI响应字节仍完整保留。公共工具输出还会检查非有限数值、undefined和循环引用等，不通过JSON.stringify悄悄丢字段，而是指出具体字段路径。遇到此类适配错误不应重复上传或重发取图任务。
+
 ## 高级配置
 
 正常情况下无需配置。确有需要时，在相应 profile 的 `cordis.patch.yml` 中覆盖插件行，例如（覆盖会替换整个 config，请保留自己需要的字段）：
@@ -163,6 +165,6 @@ npm run check
 npm run pack:check
 ```
 
-测试使用真正的Cordis/DSH工具流水线，并验证实际 `/openglyph` pre-step会注入完整技能。远端CLI边界用模拟器；本地另用真实Tectonic、真实OTF与高层JSON编译器测试普通汉字/已有字/新字混排、字体嵌入、旧PDF保留和未知编号失败。CI没有TeX引擎时明确跳过实编分支，本机验收单独记录。可设 `GWZ_TEST_PYTHON`、`GWZ_TEST_TECTONIC` 指向有构字依赖的测试解释器和引擎。没有付费DeepSeek/Kimi实测，不能据此宣称真实模型识字准确率的数值提升。
+测试使用真正的Cordis/DSH工具流水线，并验证实际 `/openglyph` pre-step会注入完整技能。日常/CI远端边界使用明确标识的模拟器（包含Python负零），不自动发付费请求；本地另用真实Tectonic、真实OTF与高层JSON编译器测试普通汉字/已有字/新字混排、字体嵌入、旧PDF保留和未知编号失败。CI没有TeX引擎时明确跳过实编分支，本机验收单独记录。可设 `GWZ_TEST_PYTHON`、`GWZ_TEST_TECTONIC` 指向有构字依赖的测试解释器和引擎。v0.2.2另在隔离的官方DSH 0.2.1-rc.5 headless环境，用真实deepseek-flash、真实远端CLI、真实图片附件完成了扫描PDF第40页的取图回归；不是只发一次API问候，也不是对识字或造字准确率的评测。详情见 [真实回归说明](docs/LIVE-REGRESSION-2026-11-04.md)。
 
 自有插件代码采用MIT；随包GlyphWiki字形数据、GPL KAGE源和第三方依赖保留各自许可，见 [第三方说明](THIRD-PARTY-NOTICES.md)。服务器模型/图库和费用仍由服务管理，不随插件重新授权。网站：[openglyph.cn](https://openglyph.cn)；排印库：[OpenGlyph-LaTeX](https://github.com/Open-Glyph/OpenGlyph-LaTeX)。

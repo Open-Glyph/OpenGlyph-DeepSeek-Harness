@@ -26,9 +26,9 @@
 
 ## gwz_page_prepare：取一页原始证据
 
-取用户指定物理页的原图及可用的原生文本。默认仅 detail=image，不做布局、不批量切字、不自动找其他释文页。内置原生文本是来源材料，不是经核定的隶定。
+取用户指定物理页的原图及可用的原生文本。默认仅 detail=image，不做布局、不批量切字、不自动找其他释文页。source_image_original=true 且 render_kind=pdf_embedded_original 表示直接提取内嵌原图，即使 route=raster 也不是按 DPI 重渲染；pixel_resampling=false 表示未重采样。内置原生文本是来源材料，不是经核定的隶定。
 
-返回：document_id、page、page_asset.asset_id、原始尺寸、坐标空间、原生文本证据；图像会直接展示。
+返回：document_id、page、page_asset.asset_id、原始尺寸、坐标空间、source_image_original/render_kind/pixel_resampling、图像到PDF坐标矩阵、原生文本证据；图像会直接展示。
 
 | 参数 | 类型 | 必填 | 默认/说明 |
 |---|---|---|---|
