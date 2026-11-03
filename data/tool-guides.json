@@ -1,0 +1,142 @@
+{
+  "document_open": {
+    "title": "登记文献",
+    "purpose": "登记已上传的 PDF、图像或 Office 文件，取得 document_id 和页数；本工具不会识字。若手里是本地文件路径，先用 gwz_open 或 gwz_upload，不要把路径填进 input_key。",
+    "returns": "document_id、source_sha256、pages；这是文档身份和范围，不是释文。",
+    "example": {"input_key": "从 gwz_upload 返回的 input_key"},
+    "next": ["gwz_page_prepare"]
+  },
+  "page_prepare": {
+    "title": "取一页原始证据",
+    "purpose": "取用户指定物理页的原图及可用的原生文本。默认仅 detail=image，不做布局、不批量切字、不自动找其他释文页。内置原生文本是来源材料，不是经核定的隶定。",
+    "returns": "document_id、page、page_asset.asset_id、原始尺寸、坐标空间、原生文本证据；图像会直接展示。",
+    "example": {"document_id": "使用登记结果中的 document_id", "page": 32, "detail": "image"},
+    "next": ["gwz_glyph_detect", "gwz_reading_plan"]
+  },
+  "asset_import": {
+    "title": "登记已上传图像",
+    "purpose": "把上传返回的 input_key 登记为原始图像 asset_id。不接受本地文件路径、URL、裁切预览坐标。",
+    "returns": "asset_id、sha256、size_px；只证明图像字节身份，不证明字的读法。",
+    "example": {"input_key": "从 gwz_upload 返回的 input_key"},
+    "next": ["gwz_glyph_detect", "gwz_glyph_search"]
+  },
+  "crop": {
+    "title": "按已核定原图框裁切",
+    "purpose": "执行已经精确确定的原像素半开框 [left,top,right,bottom]，支持 items 批量。优先采用 gwz_glyph_detect 的框；不要自己看缩略图估算坐标。粗框定位应交给检测器，而不是此工具。",
+    "returns": "原像素裁图 asset、父图 asset_id、bbox_px、来源记录；不会 OCR。",
+    "example": {"asset_id": "使用原图的 asset_id", "bbox_px": [100, 200, 160, 280]},
+    "next": ["gwz_glyph_template_search", "gwz_glyph_search"]
+  },
+  "glyph_detect": {
+    "title": "专用模型框字",
+    "purpose": "用常驻小模型对灰度原图定位字形，不依赖大模型手写 bbox。整页可只给 asset_id；粗框会默认向周围扩大 5 倍。直接返回原字裁图与全部编号候选，不能把检测框当成识字结果，也不能默默忽略漏检。",
+    "returns": "candidates[].candidate_id、bbox_px、asset.asset_id，source_size_px、全部 contact_sheets、边界诊断；候选编号不是阅读顺序。",
+    "example": {"asset_id": "使用 page_asset.asset_id", "confidence": 0.25},
+    "next": ["gwz_glyph_template_search", "gwz_glyph_search", "gwz_reading_plan"]
+  },
+  "split_line": {
+    "title": "规则行列的投影分割",
+    "purpose": "仅对已经定位、方向明确的规则打印体行列提出字位；竖排用 vertical-ttb。不把投影当作竹简、甲骨、拓片的可靠单字边界。",
+    "returns": "line_id、原行图、slots 的原像素框和各字图。",
+    "example": {"asset_id": "已经定位的打印体列 asset_id", "direction": "vertical-ttb"},
+    "next": ["gwz_glyph_template_search", "gwz_reading_plan"]
+  },
+  "reading_plan": {
+    "title": "保存阅读顺序与逐字对应",
+    "purpose": "记录分区、列序、字序，以及原形图与隶定打印字的对应。使用既有检测结果和实际证据；保留缺字、残片、重文号、空侧和一对多关系，不能因数量相等就声称对应。",
+    "returns": "带版本的阅读计划、分区、单位和 alignments；不会识别或核定字义。",
+    "example": {"asset_id": "原图 asset_id", "writing_mode": "vertical-rl", "regions": [{"id": "col-1", "bbox_px": [100, 20, 180, 700], "units": []}]},
+    "next": ["gwz_transcribe"]
+  },
+  "glyph_verify": {
+    "title": "原图与最终字体直接比较",
+    "purpose": "将每个原打印体字图与最终字体的明确码位直接渲染比较。用于排印验收，不用 DINO 相似度代替。needs_review 时保留可打印稿并向人展示差异，不能假称通过，也不能无限重试。",
+    "returns": "逐项 pass/needs_review、原图/字体渲染/差分图、缺失和多出部分的诊断；这是几何比较，不是学术释读确认。",
+    "example": {"items": [{"source_asset_id": "原字图 asset_id", "font_asset_id": "最终合并字体 asset_id", "codepoint": "U+E000"}]},
+    "next": ["gwz_glyph_template_inspect", "gwz_glyph_compose", "gwz_deliver"]
+  },
+  "glyph_search": {
+    "title": "DINO 全图库字形检索",
+    "purpose": "对生僻、争议或不熟悉字形检索相似原图。支持 asset_id 或 asset_ids。适合查来源和异体；若目标是可编辑底字/部件，优先用 gwz_glyph_template_search。相似度不等于识字概率。",
+    "returns": "search_id、candidates[].candidate_id、候选 asset_id 和图像、score；标签未揭示、身份未确认。",
+    "example": {"asset_id": "单字原图 asset_id", "top_k": 8},
+    "next": ["gwz_glyph_select", "gwz_glyph_template_search"]
+  },
+  "glyph_select": {
+    "title": "保存本次检索候选选择",
+    "purpose": "看过候选图以后，用同一 search_id 下的 candidate_id 保存选择。不从编号或得分猜字，不跨搜索复制候选编号。",
+    "returns": "binding_id、永久 gwz 身份和来源信息；选择仍未经过图形或学术核定。",
+    "example": {"search_id": "检索返回的 search_id", "candidate_id": "c1"},
+    "next": ["gwz_glyph_lookup", "gwz_glyph_resolve", "gwz_transcribe"]
+  },
+  "glyph_resolve": {
+    "title": "查看永久字形身份及来源",
+    "purpose": "用已有 gwz 代码取回字形、来源别名与映射证据；来源别名不是确定读法。",
+    "returns": "原图、主来源记录、别名、字体/码位信息与其未核定状态。",
+    "example": {"code": "使用工具实际返回的 gwz 代码"},
+    "next": ["gwz_glyph_lookup", "gwz_glyph_compose"]
+  },
+  "glyph_register": {
+    "title": "保存没有匹配的原字图",
+    "purpose": "为原字图登记稳定 gwz:sha256 身份，以便比较和追踪。它不是造字、不会生成可打字字体；需要排印时继续走模板检索和 glyph_compose。",
+    "returns": "基于原始字节的稳定 gwz 代码和未释读状态。",
+    "example": {"asset_id": "未找到匹配的原字图 asset_id"},
+    "next": ["gwz_glyph_template_search", "gwz_glyph_compose"]
+  },
+  "transcribe": {
+    "title": "保存已经阅读的释文",
+    "purpose": "仅保存调用者已经读出和校对的 text/binding_id/glyph_code 等分段，完全不会调用 OCR 或识别模型。不要指望调用此工具能自动识字；不熟悉字形须先查字、选模板或造字。",
+    "returns": "持久化释文版本、原文档/页/块引用、文字与字形引用；保存成功不等于识字正确。",
+    "example": {"document_id": "已登记文档", "page": 32, "block_id": "页面返回的 block_id", "parts": [{"text": "已经核对的原文"}]},
+    "next": ["gwz_document_result", "gwz_glyph_verify"]
+  },
+  "document_result": {
+    "title": "取回文献阅读结果",
+    "purpose": "按阅读顺序分页取回保存的块、文字、图表和未处理状态；有 next_offset 时仍有后续，不得把当前一页当成全部。",
+    "returns": "blocks、total_blocks、next_offset、未完成计数；已保存释文不自动获得核定身份。",
+    "example": {"document_id": "已登记文档", "offset": 0, "limit": 50},
+    "next": ["gwz_glyph_verify", "gwz_deliver"]
+  },
+  "layout_analyze": {
+    "title": "可选版面建议（非默认流程）",
+    "purpose": "仅在用户确实需要版面建议时使用。不会 OCR，不能替代单字检测；普通取页与字形采集不自动运行版面模型，也不凭版面类别寻找书中其他释文页。",
+    "returns": "未核定的区域、可选行/字位及覆盖图。",
+    "example": {"asset_id": "原页 asset_id", "analysis_mode": "regions", "writing_mode": "vertical-rl"},
+    "next": ["gwz_glyph_detect", "gwz_reading_plan"]
+  },
+  "glyph_lookup": {
+    "title": "按编号查可排印底字或部件",
+    "purpose": "查 Unicode、GlyphWiki ASCII 名称、返回的 glyph_ref、已选择的 gwz 代码或 IDS，显示真实字形与异体。mode=parts 展示可复用部件和布局；不知道如何键入生僻字时，用图像模板检索返回的程序/编号，不要求先打出该汉字。",
+    "returns": "glyph_ref、可用变体、真实预览、部件/模板、分页 next_offset。",
+    "example": {"query": "u81e4", "mode": "parts"},
+    "next": ["gwz_glyph_template_inspect", "gwz_glyph_compose"]
+  },
+  "glyph_template_search": {
+    "title": "按图寻找可编辑底字和部件",
+    "purpose": "从原字图检索可排印的 GlyphWiki 底字与部件，直接返回可回放 JSON program。造新字先用本工具找最接近底字；scope=component 可找部件。不用先输入打不出的汉字，不把相似候选直接当成正确字。",
+    "returns": "候选的 glyph_ref/glyph_name、program、kind、真实预览和分页；候选身份未核定。",
+    "example": {"asset_id": "待排印单字的原图 asset_id", "scope": "all", "top_k": 8},
+    "next": ["gwz_glyph_template_inspect", "gwz_glyph_compose"]
+  },
+  "glyph_template_inspect": {
+    "title": "展开并查看模板编号部件",
+    "purpose": "展开实际返回的 program，查看 root 或某个真实 node 的编号与预览。按这些编号替换部件、增饰笔、删记录、移动或缩放；不要猜编号、把记录号当汉字笔画语义，或编底层 KAGE。hint_asset_id 可给出原图绑定的修改建议。",
+    "returns": "实际 program、nodes[].node、编号部件图、diagnostics/proposals、来源绑定的 proposal_id；建议不会自动应用。",
+    "example": {"program": {"schema": "guwenzi.template-program.v1", "base": "ebag:s030-067", "edits": []}, "node": "root"},
+    "next": ["gwz_glyph_compose", "gwz_glyph_template_inspect"]
+  },
+  "glyph_compose": {
+    "title": "造新字并生成可复制排印字体",
+    "purpose": "需要输出可打字、可排印的生僻隶定字或新字时调用。本工具不是贴图片：服务端生成 SVG/PNG 和 OTF/TTF、码位映射、可复制文本、嵌入字体 Word、LaTeX 包。优先使用 template_search→inspect 返回的 program/proposal；找不到全字就改部件和结构。旧 IDS/structure 方案保留并行。不可用相似常用字顶替，不写原始 KAGE。",
+    "returns": "gwz_code、真实预览、print_font.status、otf_asset/ttf_asset/mapping_asset/text_asset/word_sample_asset、glyphs 和 LaTeX 包。ready 只证明字体可下载，不证明与原图相同。批量采用合并字体，不能拼接多个单字字体的 U+E000。",
+    "example": {"program": {"schema": "guwenzi.template-program.v1", "base": "ebag:s030-067", "edits": []}},
+    "next": ["gwz_glyph_verify", "gwz_deliver"]
+  },
+  "doctor": {
+    "title": "核查工具资源",
+    "purpose": "核查并缓存服务端模型、索引和字库校验和，不识字。普通连通性请用 gwz_check，避免每次任务重跑全资源检查。",
+    "returns": "协议、资源存在和校验状态；不运行大语言模型。",
+    "example": {},
+    "next": ["gwz_open", "gwz_page_prepare"]
+  }
+}

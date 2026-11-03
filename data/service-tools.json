@@ -1,0 +1,1295 @@
+{
+  "protocol": "guwenzi.tools.v1",
+  "source": "guwenzi-tools 0.6.0 public schema snapshot",
+  "tools": [
+    {
+      "name": "document_open",
+      "description": "Archive PDF/image/Office input and report page count; does not read or infer text.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "input_key": {
+            "description": "Relative to the configured inputs/ directory",
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Input Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "input_key"
+        ],
+        "title": "DocumentOpen",
+        "type": "object"
+      }
+    },
+    {
+      "name": "page_prepare",
+      "description": "One page evidence. detail=image skips layout; regions(default), lines, or explicit slots. Native mode preserves text/font/path evidence. No inferred OCR.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "document_id": {
+            "title": "Document Id",
+            "type": "string"
+          },
+          "page": {
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "mode": {
+            "default": "auto",
+            "enum": [
+              "auto",
+              "native",
+              "raster"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "dpi": {
+            "default": 288,
+            "maximum": 400,
+            "minimum": 72,
+            "title": "Dpi",
+            "type": "integer"
+          },
+          "detail": {
+            "default": "regions",
+            "enum": [
+              "image",
+              "regions",
+              "lines",
+              "slots"
+            ],
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "document_id",
+          "page"
+        ],
+        "title": "PagePrepare",
+        "type": "object"
+      }
+    },
+    {
+      "name": "asset_import",
+      "description": "Import an image from inputs/ with original bytes; enlarged views are generated on request.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "input_key": {
+            "description": "Relative to the configured inputs/ directory",
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Input Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "input_key"
+        ],
+        "title": "DocumentOpen",
+        "type": "object"
+      }
+    },
+    {
+      "name": "crop",
+      "description": "Exact original-pixel crops. Large batches are handled internally; each item retains independent provenance.",
+      "input_schema": {
+        "$defs": {
+          "CropItem": {
+            "additionalProperties": false,
+            "properties": {
+              "asset_id": {
+                "title": "Asset Id",
+                "type": "string"
+              },
+              "bbox_px": {
+                "description": "Half-open [left,top,right,bottom], original asset pixels",
+                "items": {
+                  "type": "integer"
+                },
+                "maxItems": 4,
+                "minItems": 4,
+                "title": "Bbox Px",
+                "type": "array"
+              }
+            },
+            "required": [
+              "asset_id",
+              "bbox_px"
+            ],
+            "title": "CropItem",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "not": {
+              "required": [
+                "items"
+              ]
+            },
+            "required": [
+              "asset_id",
+              "bbox_px"
+            ]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "asset_id"
+                  ]
+                },
+                {
+                  "required": [
+                    "bbox_px"
+                  ]
+                }
+              ]
+            },
+            "required": [
+              "items"
+            ]
+          }
+        ],
+        "properties": {
+          "asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Asset Id"
+          },
+          "bbox_px": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "maxItems": 4,
+                "minItems": 4,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Bbox Px"
+          },
+          "items": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/$defs/CropItem"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Items"
+          }
+        },
+        "title": "Crop",
+        "type": "object"
+      }
+    },
+    {
+      "name": "glyph_detect",
+      "description": "Find all character proposals on grayscale. Give rough bbox_px in ORIGINAL pixels; width/height expand 5x once. Returns full ROI, ALL numbered candidates and sheets, original crops and source coordinates. Inspect every candidate; detector does not recognize text, select a target or guarantee boundaries. Omit bbox for full-page detection only when needed.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "bbox_px": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "maxItems": 4,
+                "minItems": 4,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional rough original-pixel bbox; expanded once around its center. Omit for full image.",
+            "title": "Bbox Px"
+          },
+          "expansion": {
+            "default": 5.0,
+            "minimum": 1,
+            "title": "Expansion",
+            "type": "number"
+          },
+          "confidence": {
+            "default": 0.25,
+            "exclusiveMaximum": 1,
+            "exclusiveMinimum": 0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "imgsz": {
+            "default": 640,
+            "enum": [
+              640,
+              1280
+            ],
+            "title": "Imgsz",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "asset_id"
+        ],
+        "title": "GlyphDetect",
+        "type": "object"
+      }
+    },
+    {
+      "name": "split_line",
+      "description": "Propose slots along explicit horizontal-ltr/rtl or vertical-ttb axis, cropping unchanged original pixels. Narrow marks retained; detached components need review.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "direction": {
+            "default": "horizontal-ltr",
+            "enum": [
+              "horizontal-ltr",
+              "horizontal-rtl",
+              "vertical-ttb"
+            ],
+            "title": "Direction",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_id"
+        ],
+        "title": "SplitLine",
+        "type": "object"
+      }
+    },
+    {
+      "name": "reading_plan",
+      "description": "Record explicit sections, vertical-rl/lr columns and top-to-bottom units in original pixel coordinates. Align photos and print with monotone anchors, preserving gaps/omissions and 1:n relations; no OCR or identity confirmation.",
+      "input_schema": {
+        "$defs": {
+          "AlignmentAnchor": {
+            "additionalProperties": false,
+            "properties": {
+              "source_ids": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Source Ids",
+                "type": "array"
+              },
+              "target_ids": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Target Ids",
+                "type": "array"
+              },
+              "relation": {
+                "default": "correspondence",
+                "enum": [
+                  "correspondence",
+                  "gap",
+                  "annotation",
+                  "compound"
+                ],
+                "title": "Relation",
+                "type": "string"
+              }
+            },
+            "title": "AlignmentAnchor",
+            "type": "object"
+          },
+          "ReadingAlignment": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "title": "Id",
+                "type": "string"
+              },
+              "source_ids": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Source Ids",
+                "type": "array"
+              },
+              "target_ids": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Target Ids",
+                "type": "array"
+              },
+              "anchors": {
+                "items": {
+                  "$ref": "#/$defs/AlignmentAnchor"
+                },
+                "title": "Anchors",
+                "type": "array"
+              }
+            },
+            "required": [
+              "id",
+              "source_ids",
+              "target_ids"
+            ],
+            "title": "ReadingAlignment",
+            "type": "object"
+          },
+          "ReadingRegion": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "minLength": 1,
+                "title": "Id",
+                "type": "string"
+              },
+              "bbox_px": {
+                "items": {
+                  "type": "integer"
+                },
+                "maxItems": 4,
+                "minItems": 4,
+                "title": "Bbox Px",
+                "type": "array"
+              },
+              "section_id": {
+                "default": "main",
+                "title": "Section Id",
+                "type": "string"
+              },
+              "role": {
+                "default": "body",
+                "enum": [
+                  "body",
+                  "print",
+                  "photo",
+                  "annotation",
+                  "heading"
+                ],
+                "title": "Role",
+                "type": "string"
+              },
+              "writing_mode": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "horizontal-tb",
+                      "vertical-rl",
+                      "vertical-lr"
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Writing Mode"
+              },
+              "units": {
+                "items": {
+                  "$ref": "#/$defs/ReadingUnit"
+                },
+                "title": "Units",
+                "type": "array"
+              }
+            },
+            "required": [
+              "id",
+              "bbox_px"
+            ],
+            "title": "ReadingRegion",
+            "type": "object"
+          },
+          "ReadingUnit": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "minLength": 1,
+                "title": "Id",
+                "type": "string"
+              },
+              "bbox_px": {
+                "items": {
+                  "type": "integer"
+                },
+                "maxItems": 4,
+                "minItems": 4,
+                "title": "Bbox Px",
+                "type": "array"
+              },
+              "kind": {
+                "default": "glyph",
+                "enum": [
+                  "glyph",
+                  "missing_mark",
+                  "omission_mark",
+                  "fragment",
+                  "annotation"
+                ],
+                "title": "Kind",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "bbox_px"
+            ],
+            "title": "ReadingUnit",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "writing_mode": {
+            "default": "vertical-rl",
+            "enum": [
+              "horizontal-tb",
+              "vertical-rl",
+              "vertical-lr"
+            ],
+            "title": "Writing Mode",
+            "type": "string"
+          },
+          "regions": {
+            "items": {
+              "$ref": "#/$defs/ReadingRegion"
+            },
+            "minItems": 1,
+            "title": "Regions",
+            "type": "array"
+          },
+          "section_order": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Section Order"
+          },
+          "alignments": {
+            "items": {
+              "$ref": "#/$defs/ReadingAlignment"
+            },
+            "title": "Alignments",
+            "type": "array"
+          }
+        },
+        "required": [
+          "asset_id",
+          "regions"
+        ],
+        "title": "ReadingPlan",
+        "type": "object"
+      }
+    },
+    {
+      "name": "glyph_verify",
+      "description": "Batch compare each original print crop against the ACTUAL final font codepoint. Direct geometry only, no DINO. Returns pass or needs_review with difference assets; neither font generation nor Unicode identity exempts a position. A mismatch is not automatically a wrong character.",
+      "input_schema": {
+        "$defs": {
+          "GlyphVerifyItem": {
+            "additionalProperties": false,
+            "properties": {
+              "source_asset_id": {
+                "title": "Source Asset Id",
+                "type": "string"
+              },
+              "font_asset_id": {
+                "title": "Font Asset Id",
+                "type": "string"
+              },
+              "codepoint": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Explicit final-font address, including PUA; not a character identity assertion",
+                "title": "Codepoint"
+              }
+            },
+            "required": [
+              "source_asset_id",
+              "font_asset_id",
+              "codepoint"
+            ],
+            "title": "GlyphVerifyItem",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/$defs/GlyphVerifyItem"
+            },
+            "minItems": 1,
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "GlyphVerify",
+        "type": "object"
+      }
+    },
+    {
+      "name": "glyph_search",
+      "description": "DINO full-gallery proposals plus reranker. asset_id or asset_ids; large batches are processed in memory-bounded groups. Neutral candidates.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Asset Id"
+          },
+          "asset_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Asset Ids"
+          },
+          "top_k": {
+            "default": 8,
+            "minimum": 1,
+            "title": "Top K",
+            "type": "integer"
+          },
+          "expand_search_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expand Search Id"
+          }
+        },
+        "title": "GlyphSearch",
+        "type": "object"
+      }
+    },
+    {
+      "name": "glyph_select",
+      "description": "Bind a candidate from this search to its existing permanent glyph identity; selection is unverified.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "search_id": {
+            "title": "Search Id",
+            "type": "string"
+          },
+          "candidate_id": {
+            "title": "Candidate Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "search_id",
+          "candidate_id"
+        ],
+        "title": "GlyphSelect",
+        "type": "object"
+      }
+    },
+    {
+      "name": "glyph_resolve",
+      "description": "Resolve a permanent code to original image and source aliases. Aliases are not confirmed readings.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "GlyphResolve",
+        "type": "object"
+      }
+    },
+    {
+      "name": "glyph_register",
+      "description": "Save unresolved original image as gwz:sha256:<bytes hash>; never invent a Unicode reading.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "title": "Asset Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_id"
+        ],
+        "title": "AssetInput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "transcribe",
+      "description": "Store external transcription parts and validated bindings, preserving source evidence and uncertainty.",
+      "input_schema": {
+        "$defs": {
+          "Part": {
+            "additionalProperties": false,
+            "properties": {
+              "text": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text"
+              },
+              "binding_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Binding Id"
+              },
+              "glyph_code": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Glyph Code"
+              },
+              "asset_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Asset Id"
+              }
+            },
+            "title": "Part",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "document_id": {
+            "title": "Document Id",
+            "type": "string"
+          },
+          "page": {
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "block_id": {
+            "title": "Block Id",
+            "type": "string"
+          },
+          "parts": {
+            "items": {
+              "$ref": "#/$defs/Part"
+            },
+            "minItems": 1,
+            "title": "Parts",
+            "type": "array"
+          },
+          "author": {
+            "default": "external_multimodal_model",
+            "maxLength": 256,
+            "title": "Author",
+            "type": "string"
+          }
+        },
+        "required": [
+          "document_id",
+          "page",
+          "block_id",
+          "parts"
+        ],
+        "title": "Transcribe",
+        "type": "object"
+      }
+    },
+    {
+      "name": "document_result",
+      "description": "Paginated reading-order blocks, original figures/tables, transcription and pending status.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "document_id": {
+            "title": "Document Id",
+            "type": "string"
+          },
+          "offset": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "limit": {
+            "default": 50,
+            "maximum": 200,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "document_id"
+        ],
+        "title": "DocumentResult",
+        "type": "object"
+      }
+    },
+    {
+      "name": "layout_analyze",
+      "description": "YOLO regions and optional projection lines over one registered page image. No document required; boundaries and class names unverified.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "analysis_mode": {
+            "default": "regions",
+            "enum": [
+              "regions",
+              "regions_lines",
+              "regions_slots"
+            ],
+            "title": "Analysis Mode",
+            "type": "string"
+          },
+          "imgsz": {
+            "const": 1024,
+            "default": 1024,
+            "title": "Imgsz",
+            "type": "integer"
+          },
+          "writing_mode": {
+            "default": "horizontal-tb",
+            "enum": [
+              "horizontal-tb",
+              "vertical-rl",
+              "vertical-lr"
+            ],
+            "title": "Writing Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_id"
+        ],
+        "title": "LayoutAnalyze",
+        "type": "object"
+      }
+    },
+    {
+      "name": "glyph_lookup",
+      "description": "Preview reusable catalog glyphs and variants. mode=parts shows named components of a selected glyph and an editable layout template when available. Select by image, use glyph_ref in glyph_compose; no raw KAGE, no model inference.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "query": {
+            "description": "Unicode character, IDS, GlyphWiki name, returned gwk: reference, or public gwz code selected from DINO search; never stroke code.",
+            "minLength": 1,
+            "title": "Query",
+            "type": "string"
+          },
+          "mode": {
+            "default": "variants",
+            "enum": [
+              "variants",
+              "parts"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "offset": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "limit": {
+            "default": 8,
+            "description": "Preview page size, not a total candidate quota; follow next_offset.",
+            "maximum": 32,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "GlyphLookup",
+        "type": "object"
+      }
+    },
+    {
+      "name": "glyph_template_search",
+      "description": "Image search of editable GlyphWiki whole glyphs, named parts and source-stroke groups. scope=component searches parts. Every candidate includes a replayable program and actual preview. Shape shortlist of at least64 then DINO rerank; ranking is not identity. offset pages candidates. No bbox input.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Asset Id"
+          },
+          "asset_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Asset Ids"
+          },
+          "scope": {
+            "default": "all",
+            "enum": [
+              "all",
+              "glyph",
+              "component"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "top_k": {
+            "default": 8,
+            "minimum": 1,
+            "title": "Top K",
+            "type": "integer"
+          },
+          "offset": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "rerank": {
+            "default": true,
+            "title": "Rerank",
+            "type": "boolean"
+          }
+        },
+        "title": "TemplateSearch",
+        "type": "object"
+      }
+    },
+    {
+      "name": "glyph_template_inspect",
+      "description": "Inspect a candidate/edited JSON program, return actual whole and numbered node previews. Expand node paths before editing; direct records can be grouped/deleted, never guessed as semantic stroke IDs.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "program": {
+            "additionalProperties": true,
+            "description": "Replayable candidate program or edited program. No raw KAGE.",
+            "title": "Program",
+            "type": "object"
+          },
+          "node": {
+            "default": "root",
+            "title": "Node",
+            "type": "string"
+          },
+          "hint_asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Original query for side-by-side evidence and non-binding node-level edit proposals.",
+            "title": "Hint Asset Id"
+          }
+        },
+        "required": [
+          "program"
+        ],
+        "title": "TemplateInspect",
+        "type": "object"
+      }
+    },
+    {
+      "name": "glyph_compose",
+      "description": "Reuse a selected glyph or assemble IDS/structure from existing versioned components. The server writes all KAGE and exports SVG/PNG plus OTF/TTF, cmap, copyable text, Word and HTML. Never write raw strokes. Start with glyph_lookup for uncertain variants; adjust structure/weights, not numeric KAGE. unicode_codepoint requires confirmed identity; omission uses font-local PUA. Batches return a combined font. Generated fonts still need source comparison.",
+      "input_schema": {
+        "$defs": {
+          "GlyphComposeItem": {
+            "additionalProperties": false,
+            "properties": {
+              "proposal_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Select a source-bound proposal returned by glyph_template_inspect; do not copy it to another original.",
+                "title": "Proposal Id"
+              },
+              "glyph": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Reuse an existing glyph; prefer glyph_ref from glyph_lookup. Selected public gwz codes are bridged when the GlyphWiki source snapshot matches.",
+                "title": "Glyph"
+              },
+              "ids": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "High-level structure such as ⿱艹⿰日月. The server resolves parts and writes KAGE.",
+                "title": "Ids"
+              },
+              "structure": {
+                "anyOf": [
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Tree: {op:\"⿰\",children:[{glyph:REF},{glyph:REF}],weights:[1,2]}. Templates from glyph_lookup may include boxes. No raw strokes.",
+                "title": "Structure"
+              },
+              "program": {
+                "anyOf": [
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Template JSON: schema/base/edits, optional modules/select. Use numbered nodes from glyph_template_inspect. ASCII references; no raw KAGE.",
+                "title": "Program"
+              },
+              "fit_nodes": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Optional selected simple component nodes; program must be provided. Fit positions/sizes against hint, never change strokes.",
+                "title": "Fit Nodes"
+              },
+              "hint_asset_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 131072,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Optional original image asset to attach as evidence; never a decoding claim.",
+                "title": "Hint Asset Id"
+              },
+              "unicode_codepoint": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Confirmed standard character as U+655A or integer. Caller assertion, not recognition. Omit for font-local PUA; never invent a reading.",
+                "title": "Unicode Codepoint"
+              }
+            },
+            "title": "GlyphComposeItem",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "proposal_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Proposal Id"
+          },
+          "glyph": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Glyph"
+          },
+          "ids": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Ids"
+          },
+          "structure": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Structure"
+          },
+          "program": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Program"
+          },
+          "fit_nodes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fit Nodes"
+          },
+          "hint_asset_id": {
+            "anyOf": [
+              {
+                "maxLength": 131072,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Hint Asset Id"
+          },
+          "items": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/$defs/GlyphComposeItem"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Items"
+          },
+          "unicode_codepoint": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Unicode Codepoint"
+          }
+        },
+        "title": "GlyphCompose",
+        "type": "object"
+      }
+    },
+    {
+      "name": "doctor",
+      "description": "Verify and locally cache model/index/catalogue checksums; no inference and no Qwen.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "Empty",
+        "type": "object"
+      }
+    }
+  ]
+}
