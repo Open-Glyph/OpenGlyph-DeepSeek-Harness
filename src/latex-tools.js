@@ -4,6 +4,12 @@ const string=description=>({type:'string',minLength:1,description})
 const offset={type:'integer',minimum:0,default:0}
 
 export const latexTools=[
+  {name:'gwz_latex_ocr',method:'ocr',title:'将OCR结果排成字体支持的LaTeX项目',
+    description:'读取gwz_text_read的full_json或OCR TXT/JSON，保留原文与第二候选。将<gw:名称>和嵌套<ids>结构</ids>按实际返回的字体别名排印；检查正文字体覆盖，缺失Unicode字按原码位补字体。需要生僻字形时通过已登录账号调用glyph_compose，不载入OCR模型。不完整或缺形明确报错。输出main.tex、body.tex、实际字体、原始文本与映射，下一步必须latex_compile实编PDF。解析与生成不等于OCR正确或原形核定。',
+    parameters:object({source_file:string('OCR工具返回的full_json路径，或本地TXT/JSON。'),
+      project_dir:string('新的论文项目目录，不能覆盖已有项目。'),
+      composition_file:string('可选：之前glyph_compose或gwz_resume返回的full_json。必须对应本次所需字形，用于恢复排印而不重新合成。'),
+      text_font:string('可选：普通正文OTF/TTF路径；默认查找TeX中的Fandol宋体。')},['source_file','project_dir'])},
   {name:'gwz_latex_setup',method:'setup',title:'检查/准备本地排印环境',
     description:'检查随包22,583字字库、Tectonic/XeLaTeX、Python/Node和字体检查依赖，逐项报告可用能力。install_dependencies=true 时只在当前工作文件夹创建独立Python环境并安装离线构字/PDF检查依赖，不改全局、不装操作系统编译器、不调用云模型。普通已有字排印不需要构字依赖。',
     parameters:object({install_dependencies:{type:'boolean',default:false}})},

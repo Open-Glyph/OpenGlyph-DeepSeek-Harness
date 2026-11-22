@@ -1,6 +1,6 @@
 {
   "protocol": "guwenzi.tools.v1",
-  "source": "guwenzi-tools 0.6.0 public schema snapshot",
+  "source": "guwenzi-tools 0.7.0 public schema snapshot",
   "tools": [
     {
       "name": "document_open",
@@ -831,6 +831,49 @@
           "document_id"
         ],
         "title": "DocumentResult",
+        "type": "object"
+      }
+    },
+    {
+      "name": "text_read",
+      "description": "OpenGlyph-OCR-IDS reads one registered image: by its projection lines in YOLO text regions (layout=lines), or as a whole (layout=page). Text in reading order with every line, its box and its second options; figures, tables and formulas are listed, not read. Machine reading, unverified.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "layout": {
+            "default": "lines",
+            "description": "lines: DocLayout-YOLO regions, projection lines within the text regions, each line read; page: the whole picture read at once (no IDS)",
+            "enum": [
+              "lines",
+              "page"
+            ],
+            "title": "Layout",
+            "type": "string"
+          },
+          "writing_mode": {
+            "default": "horizontal-tb",
+            "enum": [
+              "horizontal-tb",
+              "vertical-rl"
+            ],
+            "title": "Writing Mode",
+            "type": "string"
+          },
+          "second_options": {
+            "default": false,
+            "description": "beside each line, the other reading of every place that has one",
+            "title": "Second Options",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "asset_id"
+        ],
+        "title": "TextRead",
         "type": "object"
       }
     },

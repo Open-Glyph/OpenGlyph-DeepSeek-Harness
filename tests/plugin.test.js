@@ -55,9 +55,9 @@ async function setup(t) {
   return {root,ctx,fiber,call}
 }
 
-test('registers 33 tools and unload removes every contribution',async t=>{
+test('registers 37 tools and unload removes every contribution',async t=>{
   const {ctx,fiber}=await setup(t)
-  assert.equal(ctx.tools.schemas().filter(s=>s.name.startsWith('gwz_')).length,33)
+  assert.equal(ctx.tools.schemas().filter(s=>s.name.startsWith('gwz_')).length,37)
   const skill=await ctx.skills.get('openglyph')
   assert.ok(skill.invocation.userInvocable)
   assert.match(skill.content,/gwz_latex_compile/)
@@ -68,8 +68,36 @@ test('registers 33 tools and unload removes every contribution',async t=>{
   assert.ok(compose.parameters.properties.program)
   assert.ok(compose.parameters.properties.ids)
   assert.equal(ctx.tools.get('gwz_page_prepare').parameters.properties.detail.default,'image')
+  assert.ok(ctx.tools.get('gwz_text_read'))
+  assert.ok(ctx.tools.get('gwz_ocr'))
+  assert.ok(ctx.tools.get('gwz_ocr_resume'))
+  assert.ok(ctx.tools.get('gwz_latex_ocr'))
   await fiber.dispose()
   assert.equal(ctx.tools.schemas().filter(s=>s.name.startsWith('gwz_')).length,0)
+})
+
+test('image OCR returns exact OCR-IDS markup and a reusable full JSON receipt',async t=>{
+  const {call,root}=await setup(t)
+  await writeFile(join(root,'line.png'),Buffer.from('test image'))
+  const response=await call('gwz_ocr',{image:'line.png',writing_mode:'vertical-rl',second_options:true})
+  assert.equal(response.isError,false,JSON.stringify(response))
+  assert.equal(response.value.text,'𤪷<gw:ebag_s093-073><ids>⿱艹⿰日月</ids>')
+  assert.equal(response.value.reading_verified,false)
+  const envelope=JSON.parse(await readFile(response.value.full_json,'utf8'))
+  assert.equal(envelope.result.text,response.value.text)
+  const rejected=await call('gwz_text_read',{asset_id:'asset:'+'a'.repeat(64),layout:'page',second_options:true})
+  assert.equal(rejected.isError,true)
+})
+
+test('registered-image OCR exposes its exact main text to the model even without line results',async t=>{
+  const {call}=await setup(t)
+  const response=await call('gwz_text_read',{asset_id:'asset:'+'a'.repeat(64),layout:'page'})
+  assert.equal(response.isError,false,JSON.stringify(response))
+  const visible=JSON.parse(response.content.find(row=>row.type==='text').text)
+  assert.equal(visible.summary.text,'𤪷<gw:ebag_s093-073><ids>⿱艹⿰日月</ids>')
+  assert.equal(visible.summary.complete,true)
+  assert.equal(visible.summary.reading_verified,false)
+  assert.equal(JSON.parse(await readFile(visible.full_json,'utf8')).envelope.result.text,visible.summary.text)
 })
 
 test('image → editable template → inspected nodes → compose → ordered font delivery through real DSH dispatch',async t=>{

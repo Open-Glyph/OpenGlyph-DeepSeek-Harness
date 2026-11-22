@@ -14,18 +14,18 @@
 - `glyph_compose` 真正生成 SVG、OTF/TTF、码位映射、可复制文本、嵌入字体 Word 和 LaTeX 包。
 - DINO 返回相似候选，不能用高分代替原图—最终字体比较，更不能代替人工核定。
 
-v0.2.2 注册 **33 个原生工具**：20 个远端原子工具、7 个辅助工具和6个本地LaTeX工具，统一技能入口为 **`/openglyph`**。现在不仅能交付字体包，还能准备真正的论文项目、使用随包22,583字字库、离线编译JSON新字、编译PDF并检查缺字和嵌入字体。部件预览使用WASM，不要求修改macOS桌面版的代码签名安全设置。完整参考见 [工具参数与返回](docs/TOOLS.md)。
+v0.4.0 注册 **37 个原生工具**：21 个远端原子工具、9 个辅助工具和7个LaTeX工具，统一技能入口为 **`/openglyph`**。现在不仅能交付字体包，还能准备真正的论文项目、使用随包22,583字字库、离线编译JSON新字、编译PDF并检查缺字和嵌入字体。部件预览使用WASM，不要求修改macOS桌面版的代码签名安全设置。完整参考见 [工具参数与返回](docs/TOOLS.md)。
 
 ## 安装：这些命令粘贴到终端
 
-实际测试的 Harness SDK 为 **0.2.1-rc.5**，Node.js 要求 **24.9+**，含同版本桌面应用。没有声称兼容未测试的alpha。桌面版可直接在应用的插件管理中安装/更新并启用本仓库，不要求另装命令行版DSH；更新后确认插件版本 **0.2.2**，重新加载插件或空闲时重启应用后开新会话。若 `/` 列表仍只有旧名，说明旧插件/会话目录缓存尚未刷新。
+实际测试的 Harness SDK 为 **0.2.1-rc.5**，Node.js 要求 **24.9+**，含同版本桌面应用。没有声称兼容未测试的alpha。桌面版可直接在应用的插件管理中安装/更新并启用本仓库，不要求另装命令行版DSH；更新后确认插件版本 **0.4.0**，重新加载插件或空闲时重启应用后开新会话。若 `/` 列表仍只有旧名，说明旧插件/会话目录缓存尚未刷新。
 
 命令行版按 [DeepSeek 官方说明](https://github.com/deepseek-ai/deepseek-harness) 安装。下文命令是可选的命令行安装路径。
 
 ### 1. 云端识别/检索：安装CLI并登录自己的账号
 
 ```sh
-python3 -m pip install -U 'guwenzi-tools>=0.6.0'
+python3 -m pip install -U 'guwenzi-tools>=0.7.0'
 guwenzi-tools login
 guwenzi-tools doctor --quick
 ```
@@ -39,7 +39,7 @@ guwenzi-tools doctor --quick
 例如你使用网页版的 `web` profile：
 
 ```sh
-dsh plugin --profile web add github:Open-Glyph/OpenGlyph-DeepSeek-Harness#v0.2.2
+dsh plugin --profile web add github:Open-Glyph/OpenGlyph-DeepSeek-Harness#v0.4.0
 dsh web
 ```
 
@@ -168,3 +168,13 @@ npm run pack:check
 测试使用真正的Cordis/DSH工具流水线，并验证实际 `/openglyph` pre-step会注入完整技能。日常/CI远端边界使用明确标识的模拟器（包含Python负零），不自动发付费请求；本地另用真实Tectonic、真实OTF与高层JSON编译器测试普通汉字/已有字/新字混排、字体嵌入、旧PDF保留和未知编号失败。CI没有TeX引擎时明确跳过实编分支，本机验收单独记录。可设 `GWZ_TEST_PYTHON`、`GWZ_TEST_TECTONIC` 指向有构字依赖的测试解释器和引擎。v0.2.2另在隔离的官方DSH 0.2.1-rc.5 headless环境，用真实deepseek-flash、真实远端CLI、真实图片附件完成了扫描PDF第40页的取图回归；不是只发一次API问候，也不是对识字或造字准确率的评测。详情见 [真实回归说明](docs/LIVE-REGRESSION-2026-11-04.md)。
 
 自有插件代码采用MIT；随包GlyphWiki字形数据、GPL KAGE源和第三方依赖保留各自许可，见 [第三方说明](THIRD-PARTY-NOTICES.md)。服务器模型/图库和费用仍由服务管理，不随插件重新授权。网站：[openglyph.cn](https://openglyph.cn)；排印库：[OpenGlyph-LaTeX](https://github.com/Open-Glyph/OpenGlyph-LaTeX)。
+
+## OCR 到论文 PDF（0.4）
+
+`gwz_ocr(image=本地图片)` 直接识别，返回原始文本和完整 JSON 路径。已有图片资产可用 `gwz_text_read`。默认逐行读，竖排 `writing_mode=vertical-rl`，`second_options=true` 只附带备选；整面 `layout=page` 目前无 IDS 拼写器和第二候选。中断后 `gwz_ocr_resume(output_dir=原目录)` 恢复已接受任务。
+
+接着 `gwz_latex_ocr(source_file=full_json, project_dir=新目录)` 自动解析 Unicode、GlyphWiki 和嵌套 IDS，调用当前账号的字体合成接口，下载合并字体并核对实际别名/cmap，保留原文及映射。然后 `gwz_latex_compile(tex_file=返回的main.tex)` 生成 PDF，检查缺字与嵌入字体。模型留在 PAI，本地不载入 OCR 权重。
+
+合成等待中断时，先用 `gwz_resume(job_id=回执编号)` 查询同一任务，再将其 `full_json` 作为 `composition_file` 传给 `gwz_latex_ocr`，不会重新合成；需求与回执不一致会明确拒绝。
+
+缺依赖先 latex_setup。若 TeX 正文字体尚未缓存，给 text_font 指定工作文件夹里的 OTF/TTF。缺形、合成不全或暂不支持的 Unicode 变体选择序列均明确报错。第二候选不自动改正文，GW/IDS 的 PDF ActualText 保留原标记供复制，TXT/JSON 是无损记录。排印不等于 OCR 读法或原形已经核定。

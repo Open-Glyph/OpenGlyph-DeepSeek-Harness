@@ -4,7 +4,8 @@ const fields = ['document_id','page','pages','source_sha256','source_asset_id','
   'source_image_original','render_kind','render_dpi','pixel_resampling','source_pdf_sha256',
   'image_to_pdf_transform','pdf_page_size_pt','native_text_asset','coordinate_note',
   'preprocessing','bbox_px','roi_bbox_px','candidate_count','total_candidates','next_offset','diagnostics',
-  'recognition_status','content_verified','all_ok','batch','writing_mode','reading_order_verified']
+  'recognition_status','content_verified','all_ok','batch','writing_mode','reading_order_verified',
+  'text','complete','layout','second_options','machine_reading','reading_verified','skipped_regions','model']
 
 export function summary(result, offset, size) {
   const value = Object.fromEntries(fields.filter(k => k in result).map(k => [k,result[k]]))

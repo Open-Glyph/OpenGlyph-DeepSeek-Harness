@@ -20,6 +20,9 @@ const program={schema:'guwenzi.template-program.v1',base:'ebag:s030-067',edits:[
 const resultFor=tool=>{
   if(tool==='document_open')return {document_id:'d'+'a'.repeat(32),pages:100,source_sha256:'f'.repeat(64)}
   if(tool==='asset_import')return assets.png
+  if(tool==='text_read')return {source_asset_id:assets.png.asset_id,layout:'page',writing_mode:'horizontal-tb',
+    second_options:false,text:'𤪷<gw:ebag_s093-073><ids>⿱艹⿰日月</ids>',complete:true,lines:[],
+    skipped_regions:[],machine_reading:true,reading_verified:false,model:{bundle_id:'fixture'}}
   if(tool==='page_prepare')return {page:32,page_asset:assets.png,source_size_px:[1,1],
     source_image_original:true,render_kind:'pdf_embedded_original',pixel_resampling:false,render_dpi:null,
     image_to_pdf_transform:[0.24,0,-0,0.24,0,0]}
@@ -35,6 +38,17 @@ if(command==='tools')answer({ok:true,result:source})
 else if(command==='doctor')answer({ok:true,result:{health:{status:'ok',protocol:source.protocol},ready:{status:'resources_present'}}})
 else if(command==='upload'){
   const data=await readFile(args[0]);answer({ok:true,result:{input_key:'fixture/input.pdf',sha256:sha(data),bytes:data.length}})
+}else if(command==='ocr'){
+  const sourcePath=args[0],output=args[args.indexOf('--output')+1]
+  await readFile(sourcePath);await mkdir(output,{recursive:true})
+  const result={source_asset_id:'asset:'+'a'.repeat(64),layout:'lines',writing_mode:'vertical-rl',
+    second_options:args.includes('--second-options'),text:'𤪷<gw:ebag_s093-073><ids>⿱艹⿰日月</ids>',
+    complete:true,lines:[],skipped_regions:[],model:{bundle_id:'fixture'},
+    machine_reading:true,reading_verified:false}
+  const envelope={ok:true,job_id:'j'+'a'.repeat(32),status:'complete',result}
+  const text=join(output,'text.txt'),json=join(output,'result.json')
+  await writeFile(text,result.text);await writeFile(json,JSON.stringify(envelope))
+  answer({ok:true,result:{job_id:envelope.job_id,status:'complete',ok:true,files:{text,result:json}}})
 }else if(command==='call'){
   let stdin='';for await(const chunk of process.stdin)stdin+=chunk
   const arguments_=JSON.parse(stdin)

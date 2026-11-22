@@ -349,6 +349,32 @@
 
 后续工具：`gwz_glyph_verify`、`gwz_deliver`。
 
+## gwz_text_read：OpenGlyph-OCR-IDS图片识别
+
+对已登记的图片调用OCR推理。默认layout=lines按版面与投影切行，竖排writing_mode=vertical-rl；page整面读目前不支持IDS拼写器和第二候选。second_options只附带备选，不替换主文。Unicode、<gw:名称>、<ids>嵌套IDS</ids>逐字保留，不能转成模型token编号、删标记或繁简转换。返回机器初稿，需校对。
+
+返回：text、complete、lines（原图框/顺序/文字/可选第二候选）、skipped_regions、模型版本与未核定状态；没有逐字置信度。full_json可直接交给gwz_latex_ocr。
+
+| 参数 | 类型 | 必填 | 默认/说明 |
+|---|---|---|---|
+| `asset_id` | string | 是 |  |
+| `layout` | string | 否 | "lines"；lines: DocLayout-YOLO regions, projection lines within the text regions, each line read; page: the whole picture read at once (no IDS) |
+| `writing_mode` | string | 否 | "horizontal-tb" |
+| `second_options` | boolean | 否 | false；beside each line, the other reading of every place that has one |
+
+调用参数示例：
+
+```json
+{
+  "asset_id": "使用gwz_open(kind=image)返回的asset_id",
+  "layout": "lines",
+  "writing_mode": "horizontal-tb",
+  "second_options": true
+}
+```
+
+后续工具：`gwz_latex_ocr`、`gwz_glyph_lookup`。
+
 ## gwz_layout_analyze：可选版面建议（非默认流程）
 
 仅在用户确实需要版面建议时使用。不会 OCR，不能替代单字检测；普通取页与字形采集不自动运行版面模型，也不凭版面类别寻找书中其他释文页。
@@ -504,6 +530,16 @@
 ## 本地LaTeX工具（无需云账号）
 
 这些工具直接准备项目、操作随包字库、编译新字和PDF；不是远端OCR。首次依赖检查见setup。
+
+### gwz_latex_ocr：将OCR结果排成字体支持的LaTeX项目
+
+读取gwz_text_read的full_json或OCR TXT/JSON，保留原文与第二候选。将<gw:名称>和嵌套<ids>结构</ids>按实际返回的字体别名排印；检查正文字体覆盖，缺失Unicode字按原码位补字体。需要生僻字形时通过已登录账号调用glyph_compose，不载入OCR模型。不完整或缺形明确报错。输出main.tex、body.tex、实际字体、原始文本与映射，下一步必须latex_compile实编PDF。解析与生成不等于OCR正确或原形核定。
+
+| 参数 | 必填 | 说明 |
+|---|---|---|
+| `source_file` | 是 | OCR工具返回的full_json路径，或本地TXT/JSON。 |
+| `project_dir` | 是 | 新的论文项目目录，不能覆盖已有项目。 |
+| `text_font` | 否 | 可选：普通正文OTF/TTF路径；默认查找TeX中的Fandol宋体。 |
 
 ### gwz_latex_setup：检查/准备本地排印环境
 

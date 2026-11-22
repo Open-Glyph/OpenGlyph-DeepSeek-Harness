@@ -73,3 +73,20 @@ glyph_compose 的 print_font.status=ready 才有可下载字体；把 glyphs[].c
 用 gwz_deliver 保存可复制文字、OTF/TTF、码位映射、嵌入字体 Word 与 LaTeX 包。它只整理实际已有的造字结果，不伪造确认记录。中间证据在 work，最终成果在 outputs；不要把几十张中间字图当作交付文件。
 
 gwz_transcribe 只保存已经读出的分段文本。竖排阅读顺序与原形/隶定的逐字对应另用 reading_plan 保存，不能以行数或位置相近取代字形核对。完整候选保存在 full_json；列表或图片有 next_offset 时，用 gwz_evidence 继续看。
+
+
+## OpenGlyph-OCR-IDS 识别与排印
+
+需要机器识别初稿时，先检查实时工具中有 `text_read`。外部 CLI 0.7+ 可直接：
+
+```sh
+guwenzi-tools ocr input.png --layout lines --second-options --output outputs/ocr
+# 竖排加 --writing-mode vertical-rl；整面用 --layout page（无 IDS 拼写器/第二候选）
+guwenzi-tools ocr --resume --output outputs/ocr
+```
+
+`result.json` 保留完整回执、原图框、逐行文字、备选与模型版本，`text.txt` 是原始标记文本。正文的普通 Unicode、`<gw:精确名称>`、`<ids>嵌套结构</ids>` 必须保留，不输出模型内部 token 编号，不删标签、不做 Unicode 规范化或繁简转换，不将第二候选自动替换正文。`complete=false` 表示未完整识别；机器初稿不等于学术核定。
+
+OpenGlyph-LaTeX 0.3+ 的 `python scripts/openglyph.py ocr outputs/ocr/result.json --remote -o outputs/paper` 会通过当前账号合成所需字形，检查正文字体覆盖，并输出字体、别名、原始文字、`main.tex` 和 `body.tex`。普通正文缺字时按原 Unicode 码位补齐；不支持的精确字形/选择符必须明确报出，不能静默换字。依赖 `guwenzi-tools` 和 `fonttools`，TeX 字体首次未缓存时传 `--text-font` 指定 OTF/TTF。随后真实编译 `main.tex`，检查缺字、嵌入字体和原图差异。PDF 中无编码字的复制内容用 ActualText 保留原 GW/IDS 标记，仍需随附字体与映射。
+
+DeepSeek Harness 使用 `gwz_open(kind=image)` → `gwz_text_read` → `gwz_latex_ocr(source_file=full_json, project_dir=新目录)` → `gwz_latex_compile`；不要求用户手工粘贴每个标记。网站托管沙箱仍按实际暴露工具操作，不能安装 CLI 或绕过既有坐标/台账流程。

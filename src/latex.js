@@ -88,6 +88,52 @@ export class Latex {
 
   async library(context){return materialize(context.cwd,this.config)}
 
+  async ocr(args,exec) {
+    const context=await this.stage(exec,'OCR排印'),root=await this.library(context)
+    const python=await this.python(context)
+    if(!python)throw new Error('OCR排印需要Python和fonttools；先运行gwz_latex_setup。')
+    const source=await inputFile(context.cwd,args.source_file)
+    const output=await workspacePath(context.cwd,args.project_dir)
+    if(await present(output))throw new Error('OCR项目目录已存在，请选择新目录；合成任务中断时用gwz_resume恢复，再把full_json传入composition_file。')
+    const command=[python,join(root,'scripts/openglyph.py'),'ocr',source]
+    if(args.text_font)command.push('--text-font',await inputFile(context.cwd,args.text_font,this.config.additionalInputRoots))
+    const plan=await this.json([...command,'--plan','-o',join(context.directory,'plan.json')],context)
+    const resolution={aliases:{},bundles:[]}
+    if(plan.requirements.length) {
+      const items=plan.requirements.map(row=>row.arguments)
+      let composed
+      if(args.composition_file){
+        const {record,path}=await this.controller.stored(args.composition_file,exec)
+        const request=record.envelope.request
+        if(record.tool!=='glyph_compose'||request?.name!=='glyph_compose'||
+           JSON.stringify(request.arguments?.items)!==JSON.stringify(items)||record.envelope.ok!==true||record.envelope.status!=='complete'){
+          throw new Error('恢复记录与本次OCR字形需求不一致；没有提交新合成任务。')
+        }
+        composed={result:record.envelope.result,full_json:path}
+      }else composed=await this.controller.remote('glyph_compose',{items},exec)
+      const value=composed.result,pack=value.print_font,rows=value.items||[]
+      if(value.all_ok!==true||pack?.status!=='ready'||pack.all_items_included!==true||
+         rows.length!==plan.requirements.length||new Set(rows.map(row=>row.index)).size!==rows.length||
+         rows.some(row=>row.ok!==true||!Number.isInteger(row.index)||row.index<0||row.index>=rows.length)){
+        throw new Error('OCR字形未全部生成，结果保留：'+composed.full_json)
+      }
+      const byCode=new Map(pack.latex_aliases.map(row=>[row.code,row.alias]))
+      for(const row of rows){
+        const alias=byCode.get(row.result.gwz_code)
+        if(!alias)throw new Error('字体没有对应返回的字形身份：'+composed.full_json)
+        resolution.aliases[plan.requirements[row.index].key]=alias
+      }
+      const bundle=join(context.directory,'font-bundle.zip')
+      await this.controller.run(context,['asset',pack.bundle_asset.asset_id,'--output',bundle])
+      resolution.bundles.push({path:bundle,aliases:[...new Set(Object.values(resolution.aliases))]})
+    }
+    const mapping=join(context.directory,'resolution.json')
+    await writeFile(mapping,JSON.stringify(resolution,null,2)+'\n',{flag:'wx',mode:0o600})
+    const result=await this.json([...command,'--resolution',mapping,'-o',output],context)
+    return {status:'ocr_project_ready',...result,images:[],next_tools:['gwz_latex_compile'],
+      note:'已保留OCR原文、标记和字体映射，第二候选未替换正文；编译PDF后仍需对照原图校对。'}
+  }
+
   async lookup(args,exec) {
     const context=await this.stage(exec,'查询排印字库'),root=await this.library(context)
     const metadata=JSON.parse(await readFile(join(root,'ebag/manifest.json'),'utf8'))

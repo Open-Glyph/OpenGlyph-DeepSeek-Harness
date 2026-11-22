@@ -145,6 +145,68 @@ test('prepared project compiles a real PDF with embedded glyph font, preserving 
   assert.ok(await readFile(compiled.value.pdf))
 })
 
+test('OCR JSON imports the primary reading and compiles with checked ordinary font coverage',
+  {skip:!haveTectonic||!haveBuilder},async t=>{
+  const {root,call}=await setup(t)
+  const text='清華簡記載了西周的史事。'
+  await writeFile(join(root,'ocr.json'),JSON.stringify({ok:true,result:{text,complete:true,
+    machine_reading:true,reading_verified:false,lines:[{options:[{text:'不应进入正文'}]}]}}))
+  const imported=await call('gwz_latex_ocr',{source_file:'ocr.json',project_dir:'outputs/ocr-paper'})
+  assert.equal(imported.isError,false,JSON.stringify(imported))
+  assert.equal(imported.value.font_coverage_checked,true)
+  assert.equal(await readFile(join(imported.value.project_dir,'text.txt'),'utf8'),text)
+  assert.doesNotMatch(await readFile(join(imported.value.project_dir,'body.tex'),'utf8'),/不应进入正文/)
+  const compiled=await call('gwz_latex_compile',{tex_file:imported.value.tex_file,allow_downloads:false})
+  assert.equal(compiled.isError,false,JSON.stringify(compiled))
+  assert.equal(compiled.value.pdf_audit.all_fonts_embedded,true)
+  assert.equal(compiled.value.warnings.length,0)
+})
+
+test('OCR typesetting reuses a matching composition receipt with real outline fonts',
+  {skip:!haveTectonic||!haveBuilder},async t=>{
+  const {root,ctx,call}=await setup(t)
+  // Real sample outlines exercise the handoff; they are not identity claims.
+  await writeFile(join(root,'newforms.json'),JSON.stringify({schema:'openglyph.project.v1',namespace:'ocrtest',
+    glyphs:[{id:'g1',base:'ebag:s030-067',edits:[]},{id:'g2',base:'ebag:s131-009',edits:[]}]}))
+  const forms=await call('gwz_latex_build',{project_file:'newforms.json',output_dir:'outputs/forms'})
+  assert.equal(forms.isError,false,JSON.stringify(forms))
+  const bundle=join(root,'font.zip')
+  await run(python,['-c',String.raw`import sys,zipfile,pathlib
+with zipfile.ZipFile(sys.argv[2],'w') as archive:
+    for path in pathlib.Path(sys.argv[1]).iterdir():
+        if path.is_file():archive.write(path,path.name)
+`,forms.value.output_dir,bundle])
+  const text='<gw:ebag_s093-073><ids>⿱艹⿰日月</ids>'
+  await writeFile(join(root,'ocr.json'),JSON.stringify({text,complete:true}))
+  const items=[{glyph:'ebag_s093-073'},{ids:'⿱艹⿰日月'}]
+  const record={schema:'openglyph.dsh.receipt.v1',tool:'glyph_compose',envelope:{ok:true,status:'complete',
+    request:{name:'glyph_compose',arguments:{items}},result:{all_ok:true,items:[
+      {index:1,ok:true,result:{gwz_code:'gwz:two'}},{index:0,ok:true,result:{gwz_code:'gwz:one'}}],
+    print_font:{status:'ready',all_items_included:true,bundle_asset:{asset_id:'asset:'+'b'.repeat(64)},
+      latex_aliases:[{code:'gwz:one',alias:'ocrtest:g1'},{code:'gwz:two',alias:'ocrtest:g2'}]}}}}
+  await writeFile(join(root,'composition.json'),JSON.stringify(record))
+  const prior=ctx.subprocess.resolveExecutable.bind(ctx.subprocess)
+  ctx.subprocess.resolveExecutable=async command=>command==='guwenzi-tools'?process.execPath:prior(command)
+  ctx.subprocess.spawn=spec=>{
+    assert.ok(spec.argv.includes('asset'),'the resume path must only download, never submit')
+    const target=spec.argv[spec.argv.indexOf('--output')+1]
+    const child=spawn(process.execPath,['-e',String.raw`const fs=require('fs');fs.copyFileSync(process.argv[1],process.argv[2]);console.log(JSON.stringify({ok:true,result:{path:process.argv[2]}}))`,bundle,target])
+    return {stdout:child.stdout,stderr:child.stderr,done:new Promise((resolve,reject)=>{
+      child.on('error',reject);child.on('close',exitCode=>resolve({exitCode}))}),terminate:()=>child.kill()}
+  }
+  const result=await call('gwz_latex_ocr',{source_file:'ocr.json',project_dir:'outputs/resumed',composition_file:'composition.json'})
+  assert.equal(result.isError,false,JSON.stringify(result))
+  assert.deepEqual(result.value.aliases,{'gw:ebag_s093-073':'ocrtest:g1','ids:⿱艹⿰日月':'ocrtest:g2'})
+  assert.equal(await readFile(join(result.value.project_dir,'text.txt'),'utf8'),text)
+  const compiled=await call('gwz_latex_compile',{tex_file:result.value.tex_file,allow_downloads:false})
+  assert.equal(compiled.isError,false,JSON.stringify(compiled))
+  assert.equal(compiled.value.warnings.length,0)
+  record.envelope.request.arguments.items=[{glyph:'u4e00'}]
+  await writeFile(join(root,'wrong.json'),JSON.stringify(record))
+  const rejected=await call('gwz_latex_ocr',{source_file:'ocr.json',project_dir:'outputs/mismatch',composition_file:'wrong.json'})
+  assert.equal(rejected.isError,true)
+})
+
 test('real inspect → edited JSON font → ordinary/ebag/custom mixed PDF',{skip:!haveTectonic||!haveBuilder},async t=>{
   const {root,call}=await setup(t)
   const prepared=await call('gwz_latex_prepare',{project_dir:'outputs/new-form-paper'})

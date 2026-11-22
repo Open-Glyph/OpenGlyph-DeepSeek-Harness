@@ -13,7 +13,7 @@ const root=fileURLToPath(new URL('../',import.meta.url))
 const metadata=JSON.parse(await readFile(join(root,'package.json'),'utf8'))
 assert.equal(metadata.dsh.bundle.patch,'./cordis.patch.yml')
 assert.ok(!metadata.scripts.prepare && !metadata.scripts.install && !metadata.scripts.postinstall)
-assert.equal(latexTools.length,6)
+assert.equal(latexTools.length,7)
 assert.equal(resourceManifest.glyph_count,22583)
 for(const entry of resourceManifest.files){
   assert.equal(await fileHash(join(root,'assets/openglyph-latex',entry.stored)),entry.stored_sha256)
@@ -29,4 +29,4 @@ for(const dir of ['src','scripts','tests']) {
     assert.equal(result.status,0,result.stderr)
   }
 }
-console.log('20 remote tools + six local LaTeX tools documented; 22,583-form resources verified; ESM and Git-install entry valid.')
+console.log('Remote tools and seven LaTeX tools documented; 22,583-form resources verified; ESM and Git-install entry valid.')

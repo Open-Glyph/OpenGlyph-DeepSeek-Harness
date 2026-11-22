@@ -1,8 +1,8 @@
 {
   "schema": "openglyph.dsh.latex-resources.v1",
   "source_repository": "https://github.com/Open-Glyph/OpenGlyph-LaTeX",
-  "source_commit": "824fa2d3d8b0d5d23e9b74462522e6c3ef835627",
-  "source_version": "0.2.0",
+  "source_commit": "9101b2d3d2e209d156010f9426d07005fe81b35d",
+  "source_version": "0.3.0",
   "glyph_count": 22583,
   "font_sha256": "4a7dec81374d071aa163e6198d26b8c5037bc079e7d32fc68dab0163180048c1",
   "files": [
@@ -11,8 +11,8 @@
       "stored": "openglyph.sty",
       "compression": null,
       "bytes": 4555,
-      "sha256": "e5c2be4aa4dd487c69e8bf6b4c16a45f3dc4e39a57d6c4e38db728d7e0381af3",
-      "stored_sha256": "e5c2be4aa4dd487c69e8bf6b4c16a45f3dc4e39a57d6c4e38db728d7e0381af3"
+      "sha256": "ed7a19da39c9cba8710422894fa94719d01e5184a2d4f11aa3bd8a792fb5e278",
+      "stored_sha256": "ed7a19da39c9cba8710422894fa94719d01e5184a2d4f11aa3bd8a792fb5e278"
     },
     {
       "path": "LICENSE",
@@ -34,17 +34,17 @@
       "path": "requirements-build.txt",
       "stored": "requirements-build.txt",
       "compression": null,
-      "bytes": 106,
-      "sha256": "58d0dbe6ed435ed3ad1f7f599cf3a239dd3ea1b19a7ece44b080f158566fcc53",
-      "stored_sha256": "58d0dbe6ed435ed3ad1f7f599cf3a239dd3ea1b19a7ece44b080f158566fcc53"
+      "bytes": 187,
+      "sha256": "d1e4030ebc32759810a992241b63632e1ed80d32ea6fdd70dfe6b069b5c15b37",
+      "stored_sha256": "d1e4030ebc32759810a992241b63632e1ed80d32ea6fdd70dfe6b069b5c15b37"
     },
     {
       "path": "README.md",
       "stored": "README.md",
       "compression": null,
-      "bytes": 6948,
-      "sha256": "f20da5b947f178277ab289564440de51971ea22bcd17aa571cdf96a899cf70c4",
-      "stored_sha256": "f20da5b947f178277ab289564440de51971ea22bcd17aa571cdf96a899cf70c4"
+      "bytes": 9421,
+      "sha256": "e2e2eb9acb662a58797b4b43d79bb6e0aa835f2b1f708db3375d66d6e022a305",
+      "stored_sha256": "e2e2eb9acb662a58797b4b43d79bb6e0aa835f2b1f708db3375d66d6e022a305"
     },
     {
       "path": "ebag/OpenGlyphEbag.otf",
@@ -90,9 +90,9 @@
       "path": "scripts/openglyph.py",
       "stored": "scripts/openglyph.py",
       "compression": null,
-      "bytes": 7133,
-      "sha256": "e5509bb71a0593d7f17a67b949d5e2e48399095cce08da48f0aeb06c31e220eb",
-      "stored_sha256": "e5509bb71a0593d7f17a67b949d5e2e48399095cce08da48f0aeb06c31e220eb"
+      "bytes": 9151,
+      "sha256": "290ac7aed938947d785607bcb5ad7ec5648560053f92af06bb67f27dc53d970c",
+      "stored_sha256": "290ac7aed938947d785607bcb5ad7ec5648560053f92af06bb67f27dc53d970c"
     },
     {
       "path": "examples/newforms.json",
@@ -131,8 +131,8 @@
       "stored": "scripts/oglib/__init__.py",
       "compression": null,
       "bytes": 101,
-      "sha256": "babe6d7e052a9f3c29760591dc783f27acde1048f2dbd8972f919377c48c1cc4",
-      "stored_sha256": "babe6d7e052a9f3c29760591dc783f27acde1048f2dbd8972f919377c48c1cc4"
+      "sha256": "bcdbcd3971a05c04d70e6c01817be7987e716ff0ac517a400d6f48396b449c07",
+      "stored_sha256": "bcdbcd3971a05c04d70e6c01817be7987e716ff0ac517a400d6f48396b449c07"
     },
     {
       "path": "scripts/oglib/catalog.py",
@@ -157,6 +157,22 @@
       "bytes": 5293,
       "sha256": "5e863a3adbee5ee20ef20f010409089eeb990505c0622dcbf4ae4697f0c09973",
       "stored_sha256": "5e863a3adbee5ee20ef20f010409089eeb990505c0622dcbf4ae4697f0c09973"
+    },
+    {
+      "path": "scripts/oglib/ocr_markup.py",
+      "stored": "scripts/oglib/ocr_markup.py",
+      "compression": null,
+      "bytes": 8404,
+      "sha256": "dfc0e50bd2b5487ecad40c0a01d8e2d68bc7c3253a3c8c9285ee926704b743c4",
+      "stored_sha256": "dfc0e50bd2b5487ecad40c0a01d8e2d68bc7c3253a3c8c9285ee926704b743c4"
+    },
+    {
+      "path": "scripts/oglib/ocr_project.py",
+      "stored": "scripts/oglib/ocr_project.py",
+      "compression": null,
+      "bytes": 9482,
+      "sha256": "30d8691977c3418ef07fe18f6a2f60e2100921576640615d8268c0d59a037e4d",
+      "stored_sha256": "30d8691977c3418ef07fe18f6a2f60e2100921576640615d8268c0d59a037e4d"
     },
     {
       "path": "scripts/oglib/project.py",

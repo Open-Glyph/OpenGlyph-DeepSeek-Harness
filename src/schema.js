@@ -44,6 +44,7 @@ export function validator(schema) {
 /** Pydantic model_validator rules are NOT included in JSON Schema; retain them explicitly. */
 export function validateCall(tool,args) {
   const present=(value,key)=>value[key]!==undefined&&value[key]!==null
+  if(tool==='text_read'&&args.layout==='page'&&args.second_options)throw new Error('第二候选只在逐行识别中可用。')
   if(tool==='glyph_compose') {
     const one=(value,batch=false)=>{
       const selectors=['glyph','ids','structure','program','proposal_id',...(batch?['items']:[])]

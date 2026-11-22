@@ -42,6 +42,12 @@ const helperSchemas={
   gwz_check:object({}),
   gwz_catalog:object({tool_name:string('可选服务端名称，例如 glyph_compose；省略时列出所有工具。')}),
   gwz_upload:object({file:string('用户指定的本地文件路径；仅上传，不登记文档或识字。')},['file']),
+  gwz_ocr:object({image:string('用户指定的本地图片；不接受PDF/Office。'),
+    layout:{type:'string',enum:['lines','page'],default:'lines'},
+    writing_mode:{type:'string',enum:['horizontal-tb','vertical-rl'],default:'horizontal-tb'},
+    second_options:{type:'boolean',default:false},
+    output_dir:string('可选：工作文件夹内的新回执目录，供中断后恢复。')},['image']),
+  gwz_ocr_resume:object({output_dir:string('gwz_ocr 错误详情或回执返回的现有目录。')},['output_dir']),
   gwz_open:object({file:string('用户指定的本地文件路径，默认仅限当前工作文件夹。'),
     kind:{type:'string',enum:['document','image'],default:'document',description:'PDF/论文用 document；单独字图用 image。'}},['file']),
   gwz_resume:object({job_id:{...string('已经接受的真实任务编号；本工具只查询/等待，不会重新提交。'),pattern:'^j[a-f0-9]{32}$'},
@@ -89,7 +95,7 @@ export function apply(ctx,config) {
     const local=await latex.setup({},exec)
     return {status:remote.status==='ready'&&local.status==='ready'?'ready':'partial',remote,latex:local,images:[]}
   },'检查 OpenGlyph 连接')
-  register('gwz_catalog','查每个工具的用途、完整输入 Schema、返回字段、调用示例和后续动作；不是 OCR，也不运行模型。',helperSchemas.gwz_catalog,async args=>{
+  register('gwz_catalog','查每个工具的用途、完整输入 Schema、返回字段、调用示例和后续动作；只查说明，不运行模型。',helperSchemas.gwz_catalog,async args=>{
     if(args.tool_name){
       const local=latexTools.find(r=>r.name===args.tool_name||r.name==='gwz_'+args.tool_name)
       if(local)return {status:'reference',tool:local.name,title:local.title,purpose:local.description,input_schema:local.parameters,images:[]}
@@ -105,6 +111,10 @@ export function apply(ctx,config) {
     (args,exec)=>controller.open({kind:'document',...args},exec),'上传并登记文献')
   register('gwz_upload','仅上传用户指定文件，返回 input_key、sha256 与大小。随后把 input_key 交给 gwz_document_open 或 gwz_asset_import；一般任务直接 gwz_open 会自动完成两步。',helperSchemas.gwz_upload,
     (args,exec)=>controller.upload(args,exec),'上传文件')
+  register('gwz_ocr','从本地图片直接调用OpenGlyph-OCR-IDS，默认按行读，可选横竖方向与第二候选。返回原始文字及完整JSON路径，可直接交给gwz_latex_ocr。机器输出需核对，第二候选不改写正文。中断后使用gwz_ocr_resume。',helperSchemas.gwz_ocr,
+    (args,exec)=>controller.ocr(args,exec),'识别图片文字')
+  register('gwz_ocr_resume','从已接受的OCR回执目录恢复，沿用原上传和任务，不重复POST。提交确认未知时先核对回执。',helperSchemas.gwz_ocr_resume,
+    (args,exec)=>controller.ocr({...args,resume:true},exec),'恢复图片识别')
   register('gwz_resume','按真实 job_id 恢复查询/等待。用于取消等待、掉线后的续接；不重复上传或 POST，不取消已接受的远端任务。',helperSchemas.gwz_resume,
     (args,exec)=>controller.resume({wait:true,...args},exec),'恢复已有任务')
   register('gwz_evidence','查看已有记录的后续候选/部件以及后续图页。原始 JSON 保留全部结果；按返回的 next_offset 继续，不把预览第一页当作完整结果。',helperSchemas.gwz_evidence,

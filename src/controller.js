@@ -6,6 +6,7 @@ import { Cli,CliFailure,receipt } from './cli.js'
 import { inputFile,outputDirectory,workspacePath } from './paths.js'
 import { summary,previewRefs } from './results.js'
 import { validator,validateCall } from './schema.js'
+const present=path=>access(path).then(()=>true,error=>{if(error.code==='ENOENT')return false;throw error})
 
 const RECEIPT='openglyph.dsh.receipt.v1'
 const fontFiles={otf_asset:'排印字体.otf',ttf_asset:'排印字体.ttf',mapping_asset:'字形码位映射.json',
@@ -106,6 +107,30 @@ export class Controller {
     const context=await this.stage(exec,'文献登记')
     const value=await this.upload(args,exec,context)
     return this.remote(args.kind==='image'?'asset_import':'document_open',{input_key:value.input_key},exec,context)
+  }
+
+  async ocr(args,exec) {
+    const context=await this.stage(exec,'OCR识别')
+    const output=args.output_dir?await workspacePath(context.cwd,args.output_dir,{existing:Boolean(args.resume)}):join(context.directory,'result')
+    const command=['ocr']
+    if(args.resume)command.push('--resume')
+    else{
+      validateCall('text_read',args)
+      const image=await inputFile(context.cwd,args.image,this.config.additionalInputRoots)
+      if(await present(output))throw new Error('OCR回执目录已存在；使用gwz_ocr_resume或选择新目录。')
+      command.push(image)
+      if(args.layout)command.push('--layout',args.layout)
+      if(args.writing_mode)command.push('--writing-mode',args.writing_mode)
+      if(args.second_options)command.push('--second-options')
+    }
+    try{await this.run(context,[...command,'--output',output])}
+    catch(error){throw new CliFailure(error.message,{...error.details,output_dir:output,resume_tool:'gwz_ocr_resume'})}
+    const full=join(output,'result.json'),envelope=JSON.parse(await readFile(full,'utf8')),result=envelope.result
+    if(envelope.ok!==true||typeof result?.text!=='string')throw new Error('OCR没有返回完整结果：'+full)
+    return {status:'machine_reading',job_id:envelope.job_id,full_json:full,
+      text_file:join(output,'text.txt'),output_dir:output,text:result.text,complete:result.complete,
+      lines:result.lines,skipped_regions:result.skipped_regions,model:result.model,
+      reading_verified:false,images:[],next_tools:['gwz_latex_ocr']}
   }
 
   async resume(args,exec) {
